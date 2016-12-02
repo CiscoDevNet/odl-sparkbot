@@ -7,15 +7,15 @@
  */
 package com.cisco.ctao.sparkbot.impl;
 
-import com.cisco.ctao.sparkapi.SparkClient;
-import com.cisco.ctao.sparkapi.webhookserver.WebhookServer;
-import com.cisco.ctao.sparkproxy.HandlerServiceImpl;
-import com.cisco.ctao.sparkproxy.MembershipsServiceImpl;
-import com.cisco.ctao.sparkproxy.MessagesServiceImpl;
-import com.cisco.ctao.sparkproxy.RoomsServiceImpl;
-import com.cisco.ctao.sparkproxy.TeamMembershipsServiceImpl;
-import com.cisco.ctao.sparkproxy.TeamsServiceImpl;
-import com.cisco.ctao.sparkproxy.WebhooksServiceImpl;
+import com.cisco.ctao.sparkbot.core.SparkClient;
+import com.cisco.ctao.sparkbot.core.webhooksvr.WebhookServer;
+import com.cisco.ctao.sparkbot.odladapter.HandlerServiceImpl;
+import com.cisco.ctao.sparkbot.odladapter.MembershipsServiceImpl;
+import com.cisco.ctao.sparkbot.odladapter.MessagesServiceImpl;
+import com.cisco.ctao.sparkbot.odladapter.RoomsServiceImpl;
+import com.cisco.ctao.sparkbot.odladapter.TeamMembershipsServiceImpl;
+import com.cisco.ctao.sparkbot.odladapter.TeamsServiceImpl;
+import com.cisco.ctao.sparkbot.odladapter.WebhooksServiceImpl;
 
 import java.util.Collection;
 import org.opendaylight.controller.md.sal.binding.api.ClusteredDataTreeChangeListener;
