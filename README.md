@@ -63,4 +63,4 @@ The folders in the Sparkbot project are as follows:
   ├── karaf
   └── src
   ```
-  The interesting folders are `api/src/main/yang`, which contains yang models defining the Bot's REST and MD-SAL JAva APIs, and `impl/src/main/java/cisco/ctao`, which contains the Sparkbot core and the Sparkbot proxy app.
+  The interesting folders are `api/src/main/yang`, which contains yang models that define the Bot's REST and MD-SAL JAva APIs, and `impl/src/main/java/cisco/ctao`, which contains the Sparkbot core and the Sparkbot proxy app.
