@@ -6,13 +6,14 @@ Sparkbot is a tool kit to built Java-based Bots for the Spark collaboration plat
 
 The two above component constitute the core of the Sparkbot system, as shown in the following figure:
 
-![alt text](https://github.com/CiscoDevNet/odl-sparkbot/tree/master/images/Sparkbot-Overview.png)
+![](images/Sparkbot-Overview.png)
+
 
 Sparkbot also provides integration of the core with the [OpenDaylight](https://wiki.opendaylight.org/view/Main_Page) (ODL) application development platform. ODL provides to app developers and users many useful supporting features, such as Karaf OSGI with a user console/CLI, a build system, logging, database capability for config data, automated REST API generation for managing the, clustering/HA, and a variety of plugins that a Spark app can use to connect to a variety of external systems. ODL also provides a basic auto-rendered GUI for configuraton and testing.  
 
 The integration of Sparkbot core with ODL is shown in the following figure:
 
-![alt text](https://github.com/CiscoDevNet/odl-sparkbot/tree/master/images/Sparkbot-ODL.png)
+![](images/Sparkbot-ODL.png)
 
 Note, however, that the Sparkbot core is not dependent on anything in ODL, it could be used as a library in any Java-based system. 
 
