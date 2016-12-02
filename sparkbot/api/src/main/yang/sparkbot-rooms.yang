@@ -1,0 +1,195 @@
+/*
+ * Copyright © 2016 Cisco Systems, Inc and others.  All rights reserved.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v1.0 which accompanies this distribution,
+ * and is available at http://www.eclipse.org/legal/epl-v10.html
+ */
+module sparkbot-rooms {
+    yang-version 1;
+    namespace "urn:opendaylight:params:xml:ns:yang:sparkbot:rooms";
+    prefix "svrooms";
+
+    import sparkbot-commons { prefix cmns; }
+
+    revision "2016-11-10" {
+        description
+            "Initial revision of the proxy to the Spark rooms service";
+
+    }
+
+    grouping room {
+        container sparkbot-room {
+            leaf id {
+                type string;
+                mandatory true;
+                description
+                    "The ID for the retrieved room (shoould be the same
+                    as input ID.";
+            }
+            leaf title {
+                type string;
+                description
+                    "";
+            }
+            leaf room-type {
+                type string;
+                description
+                    "";
+            }
+            leaf is-locked {
+                type boolean;
+                description
+                    "";
+            }
+            leaf last-activity {
+                type string;
+                description
+                    "";
+            }
+            leaf team-id {
+                type string;
+                description
+                    "";
+            }
+            leaf creator-id {
+                type string;
+                description
+                    "";
+            }
+            leaf created {
+                type string;
+                description
+                    "";
+            }
+        }
+    }
+
+    rpc list-rooms {
+        description
+        "List rooms. By default, lists rooms to which the authenticated
+        user belongs.";
+        input {
+            container query-parameters {
+                leaf team-id {
+                    type string;
+                    description
+                        "Limit the rooms to those associated with
+                        a team, by ID";
+                }
+                leaf max {
+                    type int32;
+                    description
+                        "Limit the maximum number of rooms in the
+                        response";
+                }
+                leaf room-type {
+                    type string {
+                        pattern "direct|group";
+                    }
+                    description
+                        "'direct' returns all 1-1 rooms, 'group' returns
+                        all group rooms. If not specified, all rooms
+                        will be returned";
+                }
+            }
+        }
+
+        output {
+            uses cmns:return-status;
+            list sparkbot-rooms {
+                ordered-by user;
+                uses room;
+           }
+        }
+    }
+
+    rpc get-room-details {
+        description
+            "Shows details for a room, by ID.";
+        input {
+            leaf room-id {
+                type string;
+                mandatory true;
+                description
+                    "The ID for the room to be retrieved";
+            }
+        }
+
+        output {
+            uses cmns:return-status;
+            uses room;
+        }
+    }
+
+    rpc create-room {
+        description
+            "Creates a room. The authenticated user is automatically added
+            as a member of the room. See the Memberships API to learn how
+            to add more people to the room.";
+
+        input {
+            leaf title {
+                type string;
+                mandatory true;
+                description
+                    "A user-friendly name for the room";
+            }
+            leaf team-id {
+                type string;
+                description
+                    "The ID for the team with which this room is
+                    associated";
+            }
+        }
+
+        output {
+            uses cmns:return-status;
+            uses room;
+        }
+    }
+
+    rpc update-room {
+        description
+            "Updates details for a room, by ID";
+
+        input {
+            leaf room-id {
+                type string;
+                mandatory true;
+                description
+                    "Room Id.";
+            }
+            leaf title {
+                type string;
+                mandatory true;
+                description
+                    "A user-friendly name for the room";
+            }
+        }
+
+        output {
+            uses cmns:return-status;
+            uses room;
+        }
+    }
+
+    rpc delete-room {
+        description
+            "Deletes a room, by ID.";
+
+        input {
+            leaf room-id {
+                type string;
+                mandatory true;
+                description
+                    "A user-friendly name for the room";
+            }
+        }
+
+        output {
+            uses cmns:return-status;
+        }
+    }
+
+}

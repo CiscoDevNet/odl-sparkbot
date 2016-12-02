@@ -1,0 +1,195 @@
+/*
+ * Copyright © 2016 Cisco Systems, Inc and others.  All rights reserved.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v1.0 which accompanies this distribution,
+ * and is available at http://www.eclipse.org/legal/epl-v10.html
+ */
+module sparkbot-memberships {
+    yang-version 1;
+    namespace "urn:opendaylight:params:xml:ns:yang:sparkbot:memberships";
+    prefix "svmemberships";
+
+    import sparkbot-commons { prefix cmns; }
+
+    revision "2016-11-10" {
+        description
+            "Initial revision of the proxy to the Spark memberships service";
+
+    }
+
+    grouping membership {
+        container sparkbot-membership {
+            leaf id {
+                type string;
+                mandatory true;
+                description
+                    "The ID for the retrieved membership (shoould be the same
+                    as input ID.";
+            }
+            leaf room-id {
+                type string;
+                description
+                    "";
+            }
+            leaf person-id {
+                type string;
+                description
+                    "";
+            }
+            leaf person-email {
+                type string;
+                description
+                    "";
+            }
+            leaf is-moderator {
+                type boolean;
+                description
+                    "";
+            }
+            leaf created {
+                type string;
+                description
+                    "";
+            }
+        }
+    }
+
+    rpc list-memberships {
+        description
+        "List memberships. By default, lists memberships to which the authenticated
+        user belongs.";
+        input {
+            container query-parameters {
+                leaf room-id {
+                    type string;
+                    description
+                        "";
+                }
+                leaf person-id {
+                    type string;
+                    description
+                        "";
+                }
+                leaf person-email {
+                    type string;
+                    description
+                        "";
+                }
+                leaf max {
+                    type int32;
+                    description
+                        "Limit the maximum number of memberships in the
+                        response";
+                }
+            }
+        }
+
+        output {
+            uses cmns:return-status;
+            list sparkbot-memberships {
+                ordered-by user;
+                uses membership;
+           }
+        }
+    }
+
+    rpc get-membership-details {
+        description
+            "Shows details for a membership, by ID.";
+        input {
+            leaf membership-id {
+                type string;
+                mandatory true;
+                description
+                    "The ID for the membership";
+            }
+        }
+
+        output {
+            uses cmns:return-status;
+            uses membership;
+        }
+    }
+
+    rpc create-membership {
+        description
+            "Creates a membership. The authenticated user is automatically added
+            as a member of the membership. See the Memberships API to learn how
+            to add more people to the membership.";
+
+        input {
+            leaf room-id {
+                type string;
+                description
+                    "";
+            }
+            leaf person-id {
+                type string;
+                description
+                    "";
+            }
+            leaf person-email {
+                type string;
+                description
+                    "";
+            }
+            leaf is-moderator {
+                type boolean;
+                mandatory true;
+                description
+                    "Set/revoke moderator privileges";
+            }
+        }
+
+        output {
+            uses cmns:return-status;
+            uses membership;
+        }
+    }
+
+    rpc update-membership {
+        description
+            "Updates details for a membership, by ID. Specify the membership ID in the
+             membershipId parameter in the URI";
+
+        input {
+            leaf membership-id {
+                type string;
+                mandatory true;
+                description
+                    "The ID for the membership";
+            }
+            leaf is-moderator {
+                type boolean;
+                mandatory true;
+                description
+                    "Set/revoke moderator privileges";
+            }
+        }
+
+        output {
+            uses cmns:return-status;
+            uses membership;
+        }
+    }
+
+    rpc delete-membership {
+        description
+            "Deletes a membership, by ID.";
+
+        input {
+            leaf membership-id {
+                type string;
+                mandatory true;
+                description
+                    "The ID for the membership";
+            }
+        }
+
+        output {
+            uses cmns:return-status;
+        }
+    }
+
+}

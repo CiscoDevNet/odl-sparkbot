@@ -1,0 +1,187 @@
+/*
+ * Copyright © 2016 Cisco Systems, Inc and others.  All rights reserved.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v1.0 which accompanies this distribution,
+ * and is available at http://www.eclipse.org/legal/epl-v10.html
+ */
+module sparkbot-team-memberships {
+    yang-version 1;
+    namespace "urn:opendaylight:params:xml:ns:yang:sparkbot:team:memberships";
+    prefix "svteam-memberships";
+
+    import sparkbot-commons { prefix cmns; }
+
+    revision "2016-11-10" {
+        description
+            "Initial revision of the proxy to the Spark team-memberships
+            service";
+
+    }
+
+    grouping team-membership {
+        container sparkbot-team-membership {
+            leaf id {
+                type string;
+                mandatory true;
+                description
+                    "The ID for the retrieved team-membership (should be
+                    the same as input ID.";
+            }
+            leaf team-id {
+                type string;
+                description
+                    "";
+            }
+            leaf person-id {
+                type string;
+                description
+                    "";
+            }
+            leaf person-email {
+                type string;
+                description
+                    "";
+            }
+            leaf is-moderator {
+                type boolean;
+                description
+                    "";
+            }
+            leaf person-display-name {
+                type string;
+                description
+                    "";
+            }
+            leaf created {
+                type string;
+                description
+                    "";
+            }
+        }
+    }
+
+    rpc list-team-memberships {
+        description
+        "List team-memberships. By default, lists team-memberships to
+        which the authenticated user belongs.";
+        input {
+            container query-parameters {
+                leaf team-id {
+                    type string;
+                    description
+                        "";
+                }
+                leaf max {
+                    type int32;
+                    description
+                        "Limit the maximum number of team-memberships in
+                        the response";
+                }
+            }
+        }
+
+        output {
+            uses cmns:return-status;
+            list team-membership-list {
+                ordered-by user;
+                uses team-membership;
+           }
+        }
+    }
+
+    rpc get-team-membership-details {
+        description
+            "Shows details for a team-membership, by ID.";
+        input {
+            leaf team-membership-id {
+                type string;
+                mandatory true;
+                description
+                    "The ID for the team-membership";
+            }
+        }
+
+        output {
+            uses cmns:return-status;
+            uses team-membership;
+        }
+    }
+
+    rpc create-team-membership {
+        description
+            "Creates a team-membership.";
+
+        input {
+            leaf team-id {
+                type string;
+                description
+                    "";
+            }
+            leaf person-id {
+                type string;
+                description
+                    "";
+            }
+            leaf person-email {
+                type string;
+                description
+                    "";
+            }
+            leaf is-moderator {
+                type boolean;
+                description
+                    "Set to true to make a person a moderator privileges";
+            }
+        }
+
+        output {
+            uses cmns:return-status;
+            uses team-membership;
+        }
+    }
+
+    rpc update-team-membership {
+        description
+            "Updates properties for a membership by ID.";
+
+        input {
+            leaf team-membership-id {
+                type string;
+                mandatory true;
+                description
+                    "The ID for the team-membership";
+            }
+            leaf is-moderator {
+                type boolean;
+                mandatory true;
+                description
+                    "Set/revoke moderator privileges";
+            }
+        }
+
+        output {
+            uses cmns:return-status;
+            uses team-membership;
+        }
+    }
+
+    rpc delete-team-membership {
+        description
+            "Deletes a team-membership, by ID.";
+
+        input {
+            leaf team-membership-id {
+                type string;
+                mandatory true;
+                description
+                    "The ID for the team-membership";
+            }
+        }
+
+        output {
+            uses cmns:return-status;
+        }
+    }
+
+}

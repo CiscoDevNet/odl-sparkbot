@@ -1,0 +1,203 @@
+/*
+ * Copyright © 2016 Cisco Systems, Inc and others.  All rights reserved.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v1.0 which accompanies this distribution,
+ * and is available at http://www.eclipse.org/legal/epl-v10.html
+ */
+module sparkbot-mesages {
+    yang-version 1;
+    namespace "urn:opendaylight:params:xml:ns:yang:sparkbot:messages";
+    prefix "svrooms";
+
+    import sparkbot-commons { prefix cmns; }
+
+    revision "2016-11-17" {
+        description
+            "Initial revision of the proxy to the Spark messages service";
+
+    }
+
+    grouping message {
+        container sparkbot-message {
+            leaf created {
+                type string;
+                description
+                    "";
+            }
+            leaf id {
+                type string;
+                mandatory true;
+                description
+                    "The ID for the retrieved message (should be the same
+                    as input ID.";
+            }
+            leaf room-id {
+                type string;
+                description
+                    "";
+            }
+            leaf room-type {
+                type string;
+                description
+                    "";
+            }
+            leaf text {
+                type string;
+                description
+                    "";
+            }
+            leaf markdown {
+                type string;
+                description
+                    "";
+            }
+            leaf person-id {
+                type string;
+                description
+                    "";
+            }
+            leaf person-email {
+                type string;
+                description
+                    "";
+            }
+        }
+    }
+
+    rpc list-messages {
+        description
+            "Lists all messages in a room with roomType. If present,
+            includes the associated media content attachment for each
+            message. The roomType could be a group or direct(1:1). The
+            list sorts the messages in descending order by creation date.";
+        input {
+            container query-parameters {
+                leaf room-id {
+                    type string;
+                    mandatory true;
+                    description
+                        "List messages for a room, by ID";
+                }
+                leaf mentioned-people {
+                    type string;
+                    description
+                        "List messages for aperson, by personid or me";
+                }
+                leaf before {
+                    type string;
+                    description
+                        "List messages sent before a date and time, in ISO8601
+                        format (YYYY-MM-DD'T'HH:MM:SS.000'Z', for example,
+                        '2016-10-12T00:00:00.000Z')";
+                }
+                leaf before-message {
+                    type string;
+                    description
+                        "List messages sent before a message, by ID.";
+                }
+                leaf max {
+                    type int32;
+                    description
+                        "Limit the maximum number of messages in the
+                        response";
+                }
+            }
+        }
+
+        output {
+            uses cmns:return-status;
+            list sparkbot-messages {
+                ordered-by user;
+                uses message;
+           }
+
+        }
+    }
+
+    rpc create-message {
+        description
+            "Posts a plain text message to a room. Media content posts
+            are tbd.";
+        input {
+            leaf room-id {
+                type string;
+                mandatory true;
+                description
+                    "List messages for a room, by ID";
+            }
+            leaf to-person-id {
+                type string;
+                description
+                    "The OD of a recipient when sending a private 1:1
+                    message";
+            }
+            leaf to-person-email {
+                type string;
+                description
+                    "The OD of a recipient when sending a private 1:1
+                    message";
+            }
+            leaf text {
+                type string;
+                description
+                    "The message, in plain text. If markdown is specified,
+                    this parameter may be *optionally* used to provide
+                    alternate text forUI clients that do not support
+                    rich text";
+            }
+            leaf markdown {
+                type string;
+                description
+                    "The message, in markdown format";
+            }
+            leaf files {
+                type string;
+                description
+                    "A URL reference for the message attachment.
+                    !!!NOT IMPLEMENTED YET!!!";
+            }
+
+        }
+        output {
+            uses cmns:return-status;
+            uses message;
+        }
+    }
+
+    rpc get-message-details {
+        description
+            "Shows details for a message, by message ID.";
+        input {
+            leaf message-id {
+                type string;
+                mandatory true;
+                description
+                    "Specifies the ID of the message for which the
+                    details are to be retrieved";
+            }
+        }
+        output {
+            uses cmns:return-status;
+            uses message;
+        }
+    }
+
+    rpc delete-message {
+        description
+            "Deletes a message, by message ID.";
+        input {
+            leaf message-id {
+                type string;
+                mandatory true;
+                description
+                    "Specifies the ID of the message that is to be
+                    deleted.";
+            }
+        }
+        output {
+            uses cmns:return-status;
+        }
+    }
+
+}

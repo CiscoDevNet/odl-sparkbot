@@ -1,0 +1,150 @@
+/*
+ * Copyright © 2016 Cisco Systems, Inc and others.  All rights reserved.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v1.0 which accompanies this distribution,
+ * and is available at http://www.eclipse.org/legal/epl-v10.html
+ */
+module sparkbot-teams {
+    yang-version 1;
+    namespace "urn:opendaylight:params:xml:ns:yang:sparkbot:teams";
+    prefix "svteams";
+
+    import sparkbot-commons { prefix cmns; }
+
+    revision "2016-11-10" {
+        description
+            "Initial revision of the proxy to the Spark teams service";
+
+    }
+
+    grouping team {
+        container sparkbot-team {
+            leaf id {
+                type string;
+                mandatory true;
+                description
+                    "The ID for the retrieved team (shoould be the same
+                    as input ID.";
+            }
+            leaf name {
+                type string;
+                description
+                    "";
+            }
+            leaf created {
+                type string;
+                description
+                    "";
+            }
+        }
+    }
+
+    rpc list-teams {
+        description
+        "List teams. By default, lists teams to which the authenticated
+        user belongs.";
+        input {
+            container query-parameters {
+                leaf max {
+                    type int32;
+                    description
+                        "Limit the maximum number of teams in the
+                        response";
+                }
+            }
+        }
+
+        output {
+            uses cmns:return-status;
+            list sparkbot-teams {
+                ordered-by user;
+                uses team;
+           }
+        }
+    }
+
+    rpc get-team-details {
+        description
+            "Shows details for a team, by ID.";
+        input {
+            leaf team-id {
+                type string;
+                mandatory true;
+                description
+                    "The ID for the team";
+            }
+        }
+
+        output {
+            uses cmns:return-status;
+            uses team;
+        }
+    }
+
+    rpc create-team {
+        description
+            "Creates a team. The authenticated user is automatically added
+            as a member of the team. See the Memberships API to learn how
+            to add more people to the team.";
+
+        input {
+            leaf name {
+                type string;
+                mandatory true;
+                description
+                    "A user-friendly name for the team";
+            }
+        }
+
+        output {
+            uses cmns:return-status;
+            uses team;
+        }
+    }
+
+    rpc update-team {
+        description
+            "Updates details for a team, by ID. Specify the team ID in the
+             teamId parameter in the URI";
+
+        input {
+            leaf team-id {
+                type string;
+                mandatory true;
+                description
+                    "The ID for the team";
+            }
+            leaf name {
+                type string;
+                mandatory true;
+                description
+                    "A user-friendly name for the team";
+            }
+        }
+
+        output {
+            uses cmns:return-status;
+            uses team;
+        }
+    }
+
+    rpc delete-team {
+        description
+            "Deletes a team, by ID.";
+
+        input {
+            leaf team-id {
+                type string;
+                mandatory true;
+                description
+                    "The ID for the team";
+            }
+        }
+
+        output {
+            uses cmns:return-status;
+        }
+    }
+
+}

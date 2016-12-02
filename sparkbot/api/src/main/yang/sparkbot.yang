@@ -1,0 +1,36 @@
+/*
+ * Copyright © 2016 Cisco Systems, Inc and others.  All rights reserved.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v1.0 which accompanies this distribution,
+ * and is available at http://www.eclipse.org/legal/epl-v10.html
+ */
+module sparkbot {
+    yang-version 1;
+    namespace "urn:opendaylight:params:xml:ns:yang:sparkbot";
+    prefix "sparkbot";
+
+    revision "2015-01-05" {
+        description "Initial revision of sparkbot model";
+    }
+
+    container spark-bot-master-config-parms {
+
+        list spark-bot-master-session-desc {
+            key spark-email-address;
+            leaf spark-email-address {
+                type string;
+            }
+            leaf access-token {
+                type string;
+            }
+        }
+    }
+
+    container spark-bot-web-hook-parms {
+        leaf web-hook-http-port {
+            type uint32;
+            description "An HTTP server will be started on this port once configured, delete the config to stop server";
+        }
+    }
+}

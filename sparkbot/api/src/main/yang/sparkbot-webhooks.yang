@@ -1,0 +1,208 @@
+/*
+ * Copyright © 2016 Cisco Systems, Inc and others.  All rights reserved.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v1.0 which accompanies this distribution,
+ * and is available at http://www.eclipse.org/legal/epl-v10.html
+ */
+module sparkbot-webhooks {
+    yang-version 1;
+    namespace "urn:opendaylight:params:xml:ns:yang:sparkbot:webhooks";
+    prefix "svrooms";
+
+    import sparkbot-commons { prefix cmns; }
+
+    revision "2016-11-17" {
+        description
+            "Initial revision of the proxy to the Spark 'webhooks' service";
+
+    }
+
+    grouping webhook {
+        container sparkbot-webhook {
+            leaf id {
+                type string;
+                mandatory true;
+                description
+                    "The ID for the webhook.";
+            }
+            leaf name {
+                type string;
+                description
+                    "";
+            }
+            leaf target-URL {
+                type string;
+                description
+                    "";
+            }
+            leaf resource {
+                type string;
+                description
+                    "";
+            }
+            leaf event {
+                type string;
+                description
+                    "";
+            }
+            leaf orgId {
+                type string;
+                description
+                    "";
+            }
+            leaf created-by {
+                type string;
+                description
+                    "";
+            }
+            leaf appId {
+                type string;
+                description
+                    "";
+            }
+            leaf status {
+                type string;
+                description
+                    "";
+            }
+            leaf created {
+                type string;
+                description
+                    "";
+            }
+        }
+    }
+
+    rpc list-webhooks {
+        description
+            "Lists all of user's webhooks..";
+        input {
+            container query-parameters {
+                leaf max {
+                    type int32;
+                    description
+                        "Limit the maximum number of messages in the
+                        response";
+                }
+            }
+        }
+
+        output {
+            uses cmns:return-status;
+            list sparkbot-webhooks {
+                ordered-by user;
+                uses webhook;
+           }
+
+        }
+    }
+
+    rpc create-webhook {
+        description
+            "Posts a plain text message to a room. Media content posts
+            are tbd.";
+        input {
+            leaf name {
+                type string;
+                mandatory true;
+                description
+                    "A user-friendly name for this webhook";
+            }
+            leaf target-URL {
+                type string;
+                description
+                    "The URL that receives POST requests for each event.";
+            }
+            leaf resource {
+                type string;
+                description
+                    "The resource type for the webhook.";
+            }
+            leaf event {
+                type string;
+                description
+                    "The event type for the webhook.";
+            }
+            leaf filter {
+                type string;
+                description
+                    "The filter that defines the webhook scope.";
+            }
+            leaf secret {
+                type string;
+                description
+                    "A secret used to generate payload signature";
+            }
+
+        }
+        output {
+            uses cmns:return-status;
+            uses webhook;
+        }
+    }
+
+    rpc get-webhook-details {
+        description
+            "Shows details for a webhook, by webhook ID.";
+        input {
+            leaf webhook-id {
+                type string;
+                mandatory true;
+                description
+                    "The ID of the webhook for which the details are to
+                    be retrieved";
+            }
+        }
+        output {
+            uses cmns:return-status;
+            uses webhook;
+        }
+    }
+
+    rpc update-webhook {
+        description
+            "Updates a webhook, by ID.";
+        input {
+            leaf webhook-id {
+                type string;
+                mandatory true;
+                description
+                    "The ID of the webhook for which the details are to
+                    be retrieved";
+            }
+            leaf name {
+                type string;
+                mandatory true;
+                description
+                    "A user-friendly name for this webhook";
+            }
+            leaf target-URL {
+                type string;
+                description
+                    "The URL that receives POST requests for each event.";
+            }
+        }
+        output {
+            uses cmns:return-status;
+            uses webhook;
+        }
+    }
+
+    rpc delete-webhook {
+        description
+            "Deletes a webhook, by webhook ID.";
+        input {
+            leaf webhook-id {
+                type string;
+                mandatory true;
+                description
+                    "The ID of the webhook that is to be deleted.";
+            }
+        }
+        output {
+            uses cmns:return-status;
+        }
+    }
+
+}
