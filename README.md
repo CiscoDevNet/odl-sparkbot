@@ -53,14 +53,19 @@ The folders in the Sparkbot project are as follows:
   │               └── com
   │                   └── cisco
   │                       └── ctao
-  │                           ├── sparkapi
-  │                           │   ├── testhandlers
-  │                           │   └── webhookserver
-  │                           ├── sparkbot
-  │                           │   └── impl
-  │                           └── sparkproxy
+  │                           └── sparkbot
+  │                               ├── core
+  │                               │   ├── testhandlers
+  │                               │   └── webhookserver
+  │                               ├── impl
+  │                               └── odladapter
   ├── it
   ├── karaf
   └── src
   ```
-  The interesting folders are `api/src/main/yang`, which contains yang models that define the Bot's REST and MD-SAL JAva APIs, and `impl/src/main/java/cisco/ctao`, which contains the Sparkbot core and the Sparkbot proxy app.
+  The interesting folders are [`api/src/main/yang`](https://github.com/CiscoDevNet/odl-sparkbot/tree/master/sparkbot/api/src/main/yang), which contains yang models that define the Bot's REST and MD-SAL Java APIs, and [`impl/src/main/java/cisco/ctao/sparkbot`](https://github.com/CiscoDevNet/odl-sparkbot/tree/master/sparkbot/impl/src/main/java/com/cisco/ctao/sparkbot), which contains the Sparkbot core, the Sparkbot ODL adapter to MD-SAL and a folder with a glue code executed at system startup.
+  
+  The Sparkbot core folder ([`impl/src/main/java/cisco/ctao/sparkbot/core`](https://github.com/CiscoDevNet/odl-sparkbot/tree/master/sparkbot/impl/src/main/java/com/cisco/ctao/sparkbot/core)) contains code for:
+  * the implementation of the Sparkbot Object-Oriented API 
+  * the implementation of the webhook server and the Spark event handler framework
+  * test handlers that provide example code for handling webhook events for different types of objects supported by Spark
