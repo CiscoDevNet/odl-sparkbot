@@ -42,6 +42,16 @@ The folders in the Sparkbot project are as follows:
   │   └── src
   │       └── main
   │           └── yang
+  ├── app
+  │   ├── src
+  │       └── main
+  │           ├── java
+  │               └── com
+  │                   └── cisco
+  │                       └── ctao
+  │                           └── sparkbot
+  │                               └── application
+  │                                   └── SparkbotAppProvider.java
   ├── artifacts
   ├── cli
   ├── features
@@ -63,9 +73,7 @@ The folders in the Sparkbot project are as follows:
   ├── karaf
   └── src
   ```
-  The interesting folders are [`api/src/main/yang`](https://github.com/CiscoDevNet/odl-sparkbot/tree/master/sparkbot/api/src/main/yang), which contains yang models that define the Bot's REST and MD-SAL Java APIs, and [`impl/src/main/java/cisco/ctao/sparkbot`](https://github.com/CiscoDevNet/odl-sparkbot/tree/master/sparkbot/impl/src/main/java/com/cisco/ctao/sparkbot), which contains the Sparkbot core, the Sparkbot ODL adapter to MD-SAL and a folder with a glue code executed at system startup.
-  
-  The Sparkbot core folder ([`impl/src/main/java/cisco/ctao/sparkbot/core`](https://github.com/CiscoDevNet/odl-sparkbot/tree/master/sparkbot/impl/src/main/java/com/cisco/ctao/sparkbot/core)) contains code for:
-  * the implementation of the Sparkbot Object-Oriented API 
-  * the implementation of the webhook server and the Spark event handler framework
-  * test handlers that provide example code for handling webhook events for different types of objects supported by Spark
+  The interesting top level folders are:
+  * **api**: The [`api/src/main/yang`](https://github.com/CiscoDevNet/odl-sparkbot/tree/master/sparkbot/api/src/main/yang) folder contains yang models that define the Bot's REST and MD-SAL Java APIs
+  * **app**: The [`app/src/main/java/com/cisco/ctao/sparkbot/application/`](https://github.com/CiscoDevNet/odl-sparkbot/tree/master/sparkbot/app/src/main/java/com/cisco/ctao/sparkbot/application) folder contains the code for the example Hello World application. Sparkbot application code should also reside in this folder. 
+  * **impl**: The [`impl/src/main/java/cisco/ctao/sparkbot`](https://github.com/CiscoDevNet/odl-sparkbot/tree/master/sparkbot/impl/src/main/java/com/cisco/ctao/sparkbot) folder is where the Sparkbot code resides. The folder contains   the Sparkbot core and the Sparkbot ODL adapter. The ([Sparkbot core folder](https://github.com/CiscoDevNet/odl-sparkbot/tree/master/sparkbot/impl/src/main/java/com/cisco/ctao/sparkbot/core)) is where the implementations of the Sparkbot Object-Oriented API, the webhook server reside and the hte Spark event handler framework. This folder also holds examples of handlers for Spark Message, Membership and Room events. The [Sparkbot ODL adaptor folder](https://github.com/CiscoDevNet/odl-sparkbot/tree/master/sparkbot/impl/src/main/java/com/cisco/ctao/sparkbot/odladapter) contains code that integrates the Sparkbot core and the user applications into OpenDaylight.
