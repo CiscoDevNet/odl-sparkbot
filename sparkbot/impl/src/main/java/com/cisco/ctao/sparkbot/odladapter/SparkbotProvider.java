@@ -5,17 +5,10 @@
  * terms of the Eclipse Public License v1.0 which accompanies this distribution,
  * and is available at http://www.eclipse.org/legal/epl-v10.html
  */
-package com.cisco.ctao.sparkbot.impl;
+package com.cisco.ctao.sparkbot.odladapter;
 
 import com.cisco.ctao.sparkbot.core.SparkClient;
 import com.cisco.ctao.sparkbot.core.webhooksvr.WebhookServer;
-import com.cisco.ctao.sparkbot.odladapter.HandlerServiceImpl;
-import com.cisco.ctao.sparkbot.odladapter.MembershipsServiceImpl;
-import com.cisco.ctao.sparkbot.odladapter.MessagesServiceImpl;
-import com.cisco.ctao.sparkbot.odladapter.RoomsServiceImpl;
-import com.cisco.ctao.sparkbot.odladapter.TeamMembershipsServiceImpl;
-import com.cisco.ctao.sparkbot.odladapter.TeamsServiceImpl;
-import com.cisco.ctao.sparkbot.odladapter.WebhooksServiceImpl;
 
 import java.util.Collection;
 import org.opendaylight.controller.md.sal.binding.api.ClusteredDataTreeChangeListener;
@@ -47,9 +40,9 @@ import org.slf4j.LoggerFactory;
  * @author jmedved
  *
  */
-public class SparkBotProvider {
+public class SparkbotProvider {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SparkBotProvider.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SparkbotProvider.class);
 
     private final DataBroker dataBroker;
     private final RpcProviderRegistry rpcProviderRegistry;
@@ -68,7 +61,7 @@ public class SparkBotProvider {
      * @param dataBroker: reference to the MD-SAL Data Broker.
      * @param rpcProviderRegistry: reference to the MD-SAL RPC registry.
      */
-    public SparkBotProvider(final DataBroker dataBroker, final RpcProviderRegistry rpcProviderRegistry) {
+    public SparkbotProvider(final DataBroker dataBroker, final RpcProviderRegistry rpcProviderRegistry) {
         this.dataBroker = dataBroker;
         this.rpcProviderRegistry = rpcProviderRegistry;
     }

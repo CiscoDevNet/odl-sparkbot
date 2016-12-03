@@ -19,7 +19,7 @@ and is available at http://www.eclipse.org/legal/epl-v10.html
              interface="org.opendaylight.controller.sal.binding.api.RpcProviderRegistry"/>
 
   <bean id="provider"
-    class="com.cisco.ctao.sparkbot.impl.SparkBotProvider"
+    class="com.cisco.ctao.sparkbot.odladapter.SparkbotProvider"
     init-method="init" destroy-method="close">
     <argument ref="dataBroker" />
     <argument ref="rpcProviderRegistry"/>
