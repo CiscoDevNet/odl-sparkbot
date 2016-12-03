@@ -25,7 +25,14 @@ and is available at http://www.eclipse.org/legal/epl-v10.html
     <bundle>wrap:mvn:com.ciscospark/ciscospark-client/{{VERSION}}</bundle>
     <bundle>mvn:com.cisco.ctao.sparkbot/sparkbot-impl/{{VERSION}}</bundle>
   </feature>
+  <feature name='odl-sparkbot-app' version='${project.version}' description='OpenDaylight :: sparkbot :: application'>
+    <feature version='${mdsal.version}'>odl-mdsal-broker</feature>
+    <feature version='${project.version}'>odl-sparkbot-api</feature>
+    <feature version='${project.version}'>odl-sparkbot</feature>
+    <bundle>mvn:com.cisco.ctao.sparkbot/sparkbot-app/{{VERSION}}</bundle>
+  </feature>
   <feature name='odl-sparkbot-rest' version='${project.version}' description='OpenDaylight :: sparkbot :: REST'>
+    <feature version="${project.version}">odl-sparkbot-app</feature>
     <feature version="${project.version}">odl-sparkbot</feature>
     <feature version="${restconf.version}">odl-restconf</feature>
   </feature>
