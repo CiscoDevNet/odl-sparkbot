@@ -43,7 +43,7 @@ public class Teams {
     }
 
     /** Get a list of teams for the user whose authentications we're using.
-     * @param max: max number of teams to returns
+     * @param max max number of teams to returns; null if not specified
      * @return List of user's teams
      */
     public static List<Team> listTeams(final Integer max) {
@@ -56,8 +56,8 @@ public class Teams {
         return TEAM_API.list(queryParams);
     }
 
-    /** Get details for a Team from Spark.
-     * @param teamId: id of the Team for which details should be retrieved
+    /** Get details for an existing Team.
+     * @param teamId id of the Team for which details should be retrieved
      * @return Team details
      */
     public static Team getTeamDetails(final String teamId) {
@@ -65,8 +65,8 @@ public class Teams {
         return TEAM_API.getDetails(teamId);
     }
 
-    /** Create a new Team in Spark .
-     * @param name: team name
+    /** Create a new Team.
+     * @param name team name
      * @return: the newly created Team that was created in to Spark
      */
     public static Team createTeam(final String name) {
@@ -77,10 +77,10 @@ public class Teams {
         return TEAM_API.create(ream);
     }
 
-    /** Update a new Team in Spark .
-     * @param teamId: id of the Team  which should be updated
-     * @param teamName: team name
-     * @return: the newly created Team that was created in to Spark
+    /** Update an existing Team .
+     * @param teamId id of the Team  which should be updated
+     * @param teamName team name
+     * @return the newly created Team that was created in to Spark
      */
     public static Team updateTeam(final String teamId, final String teamName) {
         LOG.info("createTeam: name {}", teamName);
@@ -90,8 +90,8 @@ public class Teams {
         return TEAM_API.update(teamId, team);
     }
 
-    /** Delete a Team from Spark.
-     * @param teamId: id of the Team to be deleted
+    /** Delete a Team.
+     * @param teamId id of the Team to be deleted
      */
     public static void deleteTeam(final String teamId) {
         LOG.info("deleteMessqge: TeamId '{}'", teamId);

@@ -127,7 +127,6 @@ class Client {
 
     <T> InputStream request(String method, String path, List<String[]> params, T body) {
         URL url = getUrl(path, params);
-        System.out.println("REQUEST URL: " + url);
         return request(url, method, body).inputStream;
     }
     static class Response {
@@ -329,10 +328,8 @@ class Client {
         try {
             int available;
             available = inputStream.available();
-            System.out.println("Input stream available: " + available);
             byte[] buf = new byte[available];
             inputStream.read(buf, 0, available);
-            System.out.println("Returned data: " + new String(buf));
 
             JsonParser parser = Json.createParser(new ByteArrayInputStream(buf));
             parser.next();

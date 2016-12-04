@@ -42,12 +42,17 @@ public final class Messages {
     }
 
     /** Get a list of messages for the specified Spark room.
-     * @param roomId: Room from which to get the message
-     * @param mentionedPeople: List messages for a person, by personId or me
-     * @param before: List messages sent before a date and time, in ISO8601 format
-     * @param beforeMessage: List messages sent before a message, by ID.
-     * @param max: Limit the maximum number of messages in the response
-     * @return: List of retrieved messages.
+     * @param roomId List messages for a room, by ID; mandatory, must be
+     *          specified
+     * @param mentionedPeople List messages where the caller is mentioned by
+     *          specifying "me" or the caller personId; null if not specified
+     * @param before List messages sent before a date and time, in ISO8601
+     *          format; null if not specified
+     * @param beforeMessage List messages sent before a message, by ID; null
+     *          if not specified
+     * @param max Limit the maximum number of messages in the response; null
+     *          if not specified
+     * @return List of retrieved messages.
      */
     public static List<Message> listMessages(final String roomId, final String mentionedPeople,
             final String before, final String beforeMessage, final Integer max) {
@@ -72,7 +77,7 @@ public final class Messages {
     }
 
     /** Get details for a message from Spark.
-     * @param messageId: id of the message for which details should be retrieved
+     * @param messageId id of the message for which details should be retrieved
      * @return message details
      */
     public static Message getMessageDetails(final String messageId) {
@@ -80,14 +85,25 @@ public final class Messages {
         return MESSAGE_API.getDetails(messageId);
     }
 
-    /** POST a message to the Spark service.
-     * @param roomId: Room to which to post the message
-     * @param toPersonId: Person to which to post the message (optional)
-     * @param toPersonEmail: Email of the person to which to post the
-     *                       message (optional)
-     * @param text: Text of the message
-     * @param markdown: The message in markdown format
-     * @return: the newly created message that was posted to Spark
+    /** Send a message to a room.
+     * @param roomId Room to which to post the message
+     * @param text Text of the message
+     * @return the newly created message that was posted to the room
+     */
+    public static Message createMessage(final String roomId, final String text) {
+        return createMessage(roomId, null, null, text, null);
+    }
+
+            /** Send a message to a room or a person. One of roomId, personId or
+     *  personEmail must not be null
+     * @param roomId Room to which to post the message; null if not specified
+     * @param toPersonId Person to which to post the message; null if not
+     *              specified.
+     * @param toPersonEmail Email of the person to which to post the
+     *              message (optional); null if not specified
+     * @param text Text of the message; null if not specified
+     * @param markdown The message in markdown format; null if not specified
+     * @return the newly created message that was posted to Spark
      */
     public static Message createMessage(final String roomId, final String toPersonId,
             final String toPersonEmail, final String text, final String markdown) {
@@ -105,7 +121,7 @@ public final class Messages {
     }
 
     /** Delete a message from Spark.
-     * @param messageId: id of the message to be deleted
+     * @param messageId id of the message to be deleted
      */
     public static void deleteMessage(final String messageId) {
         LOG.info("deleteMessqge: messageId '{}'", messageId);

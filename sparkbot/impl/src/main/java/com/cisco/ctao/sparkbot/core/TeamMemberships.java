@@ -46,9 +46,9 @@ public class TeamMemberships {
 
     /** Get a list of Memberships for the user whose authentications we're
      *  using.
-     * @param teamId: id of the Team for which details should should be
+     * @param teamId id of the Team for which details should should be
      *                retrieved
-     * @param max: max number of TeamMemberships to returns
+     * @param max max number of TeamMemberships to returns
      * @return List of user's TeamMembership objects
      */
     public static List<TeamMembership> listTeamMemberships(final String teamId, final Integer max) {
@@ -74,14 +74,14 @@ public class TeamMemberships {
 
     /** Create a new TeamMembership in Spark. Add someone to a team by Person
      *  ID or email address; optionally making them a moderator.
-     * @param teamId: TeamMembership id
-     * @param personId: ID of a person for whom we're creating the team
+     * @param teamId TeamMembership id
+     * @param personId ID of a person for whom we're creating the team
      *                  membership
-     * @param personEmail: email of a person for whom we're creating the team
+     * @param personEmail email of a person for whom we're creating the team
      *                  membership
-     * @param isModerator: indicates whether a person should be made
+     * @param isModerator indicates whether a person should be made
      *                     a moderator
-     * @return: the newly created TeamMembership that was created in
+     * @return the newly created TeamMembership that was created in
      *          to Spark
      */
     public static TeamMembership createTeamMembership(final String teamId, final String personId,
@@ -99,10 +99,10 @@ public class TeamMemberships {
     }
 
     /** Update an existing TeamMembership in Spark .
-     * @param teamMembershipId: id of the TeamMembership  which should be
+     * @param teamMembershipId id of the TeamMembership  which should be
      *                          updated
-     * @param isModerator: indicates whether a user should be made moderator
-     * @return: the updated TeamMembership that was created in to Spark
+     * @param isModerator indicates whether a user should be made moderator
+     * @return the updated TeamMembership that was created in to Spark
      */
     public static TeamMembership updateTeamMembership(final String teamMembershipId,
             final boolean isModerator) {
@@ -114,7 +114,7 @@ public class TeamMemberships {
     }
 
     /** Delete a TeamMembership from Spark.
-     * @param teamMembershipId: id of the TeamMembership to be deleted
+     * @param teamMembershipId id of the TeamMembership to be deleted
      */
     public static void deleteTeamMembership(final String teamMembershipId) {
         LOG.info("deleteMessqge: teamMembershipId '{}'", teamMembershipId);

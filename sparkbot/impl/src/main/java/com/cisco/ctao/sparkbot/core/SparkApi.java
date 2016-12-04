@@ -37,28 +37,28 @@ public interface SparkApi<T> {
     List<T> list(final SparkQueryParams queryParams);
 
     /** Gets from Spark detailed information for the specified element.
-     * @param elementId: the spark id of the element
+     * @param elementId the spark id of the element
      * @return detailed information about the specified element
      */
     T getDetails(final String elementId);
 
     /** Requests Spark to create a new element.
-     * @param element: Reference to an element object containing the
+     * @param element Reference to an element object containing the
      *                 element data.
      * @return element, as created by Spark
      */
     T create(final T element);
 
     /** Requests Spark to update an existing element.
-     * @param elementId: the spark id of the element to be updated
-     * @param element: Reference to an element object containing the
+     * @param elementId the spark id of the element to be updated
+     * @param element Reference to an element object containing the
      *                 element data.
      * @return element, as updated by Spark
      */
     T update(final String elementId, final T element);
 
     /** Requests Spark to delete an existing element.
-     * @param elementId: the spark id of the element to be deleted
+     * @param elementId the spark id of the element to be deleted
      */
     void delete(final String elementId);
 }

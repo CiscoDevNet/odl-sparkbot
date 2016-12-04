@@ -41,11 +41,19 @@ public class Memberships {
         return MEMBERSHIP_API;
     }
 
-    /** Get a list of messages for the specified Spark room.
-     * @param roomId: Room for which to list the memberships
-     * @param personId: Person for for which to list the memberships
-     * @param personEmail: Email of the person for whom to list the memberships
-     * @param max maximum number of memberships to return
+    /** Lists all room memberships. By default, lists memberships for rooms
+     * to which the authenticated user belongs. Use query parameters to filter
+     *  the response. Use roomId to list memberships for a room, by ID. Use
+     *  either personId or personEmail to filter the results.
+     *
+     * @param roomId Limit results to a specific room, by ID.; null if
+     *          not specified
+     * @param personId Limit results to a specific person, by ID; null
+     *          if not specified
+     * @param personEmail Limit results to a specific person, by email
+     *          address; null if not specified
+     * @param max maximum number of memberships to return; null if not
+     *          specified
      * @return list of membership objects
      */
     public static List<Membership> listMemberships(final String roomId, final String personId,
@@ -73,7 +81,7 @@ public class Memberships {
     }
 
     /** Get details for a Membership from Spark.
-     * @param membershipId: id of the Membership for which details should be retrieved
+     * @param membershipId id of the Membership for which details should be retrieved
      * @return Membership details
      */
     public static Membership getMembershipDetails(final String membershipId) {
@@ -83,11 +91,11 @@ public class Memberships {
 
     /** Create a new Membership in Spark Add someone to a room by Person ID
      *  or email address; optionally making them a moderator.
-     * @param roomId: Room where to create the membership
-     * @param personId: Person for whom to create the membership
-     * @param personEmail: Email of the person  for whom to create the
+     * @param roomId Room where to create the membership
+     * @param personId Person for whom to create the membership
+     * @param personEmail Email of the person  for whom to create the
      *                     membership
-     * @param isModerator: make the person a moderator (optional)
+     * @param isModerator make the person a moderator (optional)
      * @return the newly created Membership that was created in Spark
      */
     public static Membership createMembership(final String roomId, final String personId,
@@ -103,10 +111,10 @@ public class Memberships {
         return MEMBERSHIP_API.create(membership);
     }
 
-    /** Update a new Membership in Spark .
-     * @param membershipId: id of the Membership  which should be updated
-     * @param isModerator: Update value - give or revoke moderator rights
-     * @return: updated Membership object
+    /** Update a Membership .
+     * @param membershipId id of the Membership which should be updated
+     * @param isModerator Update value - give or revoke moderator rights
+     * @return updated Membership object
      */
     public static Membership updateMembership(final String membershipId, final boolean isModerator) {
         LOG.info("createMembership: membershipId {}, isModerator {}",
@@ -116,8 +124,8 @@ public class Memberships {
         return MEMBERSHIP_API.update(membershipId, membership);
     }
 
-    /** Delete a Membership from Spark.
-     * @param membershipId: id of the Membership to be deleted
+    /** Delete a Membership.
+     * @param membershipId id of the Membership to be deleted
      */
     public static void deleteMembership(final String membershipId) {
         LOG.info("deleteMessqge: MembershipId '{}'", membershipId);

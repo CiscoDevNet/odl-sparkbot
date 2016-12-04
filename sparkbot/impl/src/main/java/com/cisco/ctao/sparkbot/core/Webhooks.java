@@ -46,7 +46,7 @@ public final class Webhooks {
     }
 
     /** Get a list of webhooks for the user whose authentications we're using.
-     * @param max: max number of webhooks to returns
+     * @param max max number of webhooks to returns; null if not specified
      * @return List of user's webooks
      */
     public static List<Webhook> listWebhooks(final Integer max) {
