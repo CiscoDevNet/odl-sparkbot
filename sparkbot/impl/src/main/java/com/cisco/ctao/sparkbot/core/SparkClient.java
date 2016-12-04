@@ -28,19 +28,15 @@ public final class SparkClient {
     }
 
     /** Handles setting of configuration parameters (on data change).
-     * @param before: data before the change (old data)
-     * @param after: data after the change (new data)
+     * @param accessToken: new access token for the Spark client
      */
-    public static void handleConfigParmsChange(final SparkBotMasterSessionDesc before,
-            final SparkBotMasterSessionDesc after) {
-        LOG.info("SparkClient handleConfigParmsChange: before {}, after {}", before, after);
-
-        if (after != null) {
+    public static void handleAccessTokenChange(final String accessToken) {
+        if (accessToken != null) {
             spark = Spark
                     .builder()
-                    .accessToken(BEARER_TOKEN + after.getAccessToken())
+                    .accessToken(BEARER_TOKEN + accessToken)
                     .build();
-            LOG.info("SparkClient: accessToken set to '{}'", after.getAccessToken());
+            LOG.info("SparkClient: accessToken set to '{}'",accessToken);
         }
     }
 

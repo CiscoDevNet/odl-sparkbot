@@ -133,14 +133,11 @@ public final class WebhookServer {
     }
 
     /** Handles addition or change of configuration parameters.
-     * @param before: parameters before the change
-     * @param after: parameters after the change
+     * @param port the port on which to listen to requests
      */
-    public void handleConfigParmsChange(final SparkBotWebHookParms before,
-            final SparkBotWebHookParms after) {
-
-        if (before == null) {
-            startHttpServer(after);
+    public void handleConfigParmsChange(final Long port) {
+        if (port != null) {
+            startHttpServer(port.intValue());
         }
     }
 
@@ -151,8 +148,7 @@ public final class WebhookServer {
         stopHttpServer();
     }
 
-    private void startHttpServer(final SparkBotWebHookParms whParms) {
-        final Integer port = whParms.getWebHookHttpPort().intValue();
+    private void startHttpServer(final Integer port) {
         if (port < 1 && port > 65535) {
             LOG.error("SparkViewBotWebHook: http port out of range: {}", port);
             return;

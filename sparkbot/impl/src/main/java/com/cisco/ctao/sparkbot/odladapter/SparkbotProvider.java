@@ -160,8 +160,7 @@ public class SparkbotProvider {
                 switch (change.getRootNode().getModificationType()) {
                     case WRITE:
                     case SUBTREE_MODIFIED:
-                        SparkClient.handleConfigParmsChange(change.getRootNode().getDataBefore(),
-                                                              change.getRootNode().getDataAfter());
+                        SparkClient.handleAccessTokenChange(change.getRootNode().getDataAfter().getAccessToken());
                         break;
                     case DELETE:
                         SparkClient.handleConfigParmsDelete();
@@ -203,8 +202,8 @@ public class SparkbotProvider {
                 switch (change.getRootNode().getModificationType()) {
                     case WRITE:
                     case SUBTREE_MODIFIED:
-                        WebhookServer.getInstance().handleConfigParmsChange(change.getRootNode().getDataBefore(),
-                                change.getRootNode().getDataAfter());
+                        WebhookServer.getInstance().handleConfigParmsChange(
+                                change.getRootNode().getDataAfter().getWebHookHttpPort());
                         break;
                     case DELETE:
                         WebhookServer.getInstance().handleConfigParmsDelete();
