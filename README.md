@@ -63,7 +63,7 @@ The folders in the Sparkbot project are as follows:
   ```
   The interesting top level folders are:
   * **api**: The [`api/src/main/yang`](https://github.com/CiscoDevNet/odl-sparkbot/tree/master/sparkbot/api/src/main/yang) folder contains yang models that define the Bot's REST and MD-SAL Java APIs
-  * **app**: The [`app/src/main/java/com/cisco/ctao/sparkbot/application/`](https://github.com/CiscoDevNet/odl-sparkbot/tree/master/sparkbot/app/src/main/java/com/cisco/ctao/sparkbot/application) folder contains the code for the example Hello World application. Sparkbot application code should also reside in this folder. 
+  * **app**: The [`app/src/main/java/com/cisco/ctao/sparkbot/application/`](https://github.com/CiscoDevNet/odl-sparkbot/tree/master/sparkbot/app/src/main/java/com/cisco/ctao/sparkbot/application) folder contains the code for the example Hello World application. The `run()` method in [`HelloWorldApp.java`](https://github.com/CiscoDevNet/odl-sparkbot/blob/master/sparkbot/app/src/main/java/com/cisco/ctao/sparkbot/application/HelloWorldApp.java) contains examples of how to use the Sparbot API and the Sparkbot Event Handler. Sparkbot application code created by users/app developers should also reside in this folder. 
   * **impl**: The [`impl/src/main/java/cisco/ctao/sparkbot`](https://github.com/CiscoDevNet/odl-sparkbot/tree/master/sparkbot/impl/src/main/java/com/cisco/ctao/sparkbot) folder is where the Sparkbot code resides. The folder contains   the Sparkbot core and the Sparkbot ODL adapter. The ([Sparkbot core folder](https://github.com/CiscoDevNet/odl-sparkbot/tree/master/sparkbot/impl/src/main/java/com/cisco/ctao/sparkbot/core)) is where the implementations of the Sparkbot Object-Oriented API, the webhook server reside and the hte Spark event handler framework. This folder also holds examples of handlers for Spark Message, Membership and Room events. The [Sparkbot ODL adaptor folder](https://github.com/CiscoDevNet/odl-sparkbot/tree/master/sparkbot/impl/src/main/java/com/cisco/ctao/sparkbot/odladapter) contains code that integrates the Sparkbot core and the user applications into OpenDaylight.
 
 ## Downloading, Building and Running Sparkbot
@@ -88,7 +88,7 @@ Run the newly built Sparkbot image as follows:
 ```
     $ ./sparkbot/karaf/target/assembly/bin/karaf
 ```
-This starts the OpenDaylight controller and you should see the Karaf console shortly. At teh console prompt (`opendaylight-user@root>`),type:
+This starts the OpenDaylight controller and you should see the Karaf console shortly. At the console prompt (`opendaylight-user@root>`), type:
 ```
 opendaylight-user@root> log:tail
 ```
