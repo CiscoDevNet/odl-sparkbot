@@ -9,6 +9,7 @@ package com.cisco.ctao.sparkbot.application;
 
 import com.cisco.ctao.sparkbot.core.Messages;
 import com.cisco.ctao.sparkbot.core.Rooms;
+import com.cisco.ctao.sparkbot.core.SparkClient;
 import com.cisco.ctao.sparkbot.core.SparkEventHandler;
 import com.cisco.ctao.sparkbot.core.Teams;
 import com.cisco.ctao.sparkbot.core.webhooksvr.WebhookServer;
@@ -29,6 +30,7 @@ import org.slf4j.LoggerFactory;
  */
 public class HelloWorldApp {
     private static final Logger LOG = LoggerFactory.getLogger(HelloWorldApp.class);
+    private String accessToken;
 
     /** This method is the entry point to run the Hello World example.
      * @param accessToken the access token to be used to access Spark
@@ -36,13 +38,15 @@ public class HelloWorldApp {
     public void run(String accessToken) {
         LOG.info("*** HelloWorld run started.");
 
+        setTempAccessToken(accessToken);
+
         // Register our example message event handler with Sparkbot
         HelloWorldMsgHandler msgHandler = new HelloWorldMsgHandler();
         WebhookServer.registerSparkEventHandler(msgHandler);
 
         // First, create a team
         Team team = Teams.createTeam("Team Fortress");
-        logTeam(team);
+        logTeam("Created team", team);
 
         // Now, list all rooms for the newly created team. To get the rooms
         // for only our newly created team, we specify the team's Id as a
@@ -50,29 +54,30 @@ public class HelloWorldApp {
         List<Room> rooms = Rooms.listRooms(null, team.getId(), null);
         LOG.info("Team's '{}' rooms:", team.getName());
         for (Room room : rooms) {
-            logRoom(room);
+            logRoom(" -", room);
         }
 
         // Send a few messages to the team's room
         Message msg1 = Messages.createMessage(rooms.get(0).getId(), "Message #1");
-        logMsg(msg1);
+        logMsg("Sent Message #1...", msg1);
         Message msg2 = Messages.createMessage(rooms.get(0).getId(), "Message #2");
-        logMsg(msg2);
+        logMsg("Sent Message #2...", msg2);
         Message msg3 = Messages.createMessage(rooms.get(0).getId(), "Message #3");
-        logMsg(msg3);
+        logMsg("Sent Message #3...", msg3);
 
         // List all messages in the team's room:
         List<Message> msgs = Messages.listMessages(rooms.get(0).getId(), null, null, null, null);
         for (Message message : msgs) {
-            logMsg(message);
+            logMsg(" -", message);
         }
 
-        // Delete Message #1
+        // Delete Message #3
         Messages.deleteMessage(msg1.getId());
+        logMsg("Deleted Message #3...", msg3);
 
         // Update Room
         Room updatedRoom = Rooms.updateRoom(rooms.get(0).getId(), "Team Fortress 2");
-        logRoom(updatedRoom);
+        logRoom("Updated room...", updatedRoom);
 
         // Unregister our example message event handler
         WebhookServer.unregisterSparkEventHandler(msgHandler);
@@ -80,6 +85,9 @@ public class HelloWorldApp {
         // Delete the team we created at the beginning; this deletes the
         // team's room also and all messages in it.
         Teams.deleteTeam(team.getId());
+        logTeam("Deleted team...", team);
+
+        resetTempAccessToken();
 
         LOG.info("*** HelloWorld run finished.");
     }
@@ -106,19 +114,30 @@ public class HelloWorldApp {
             } else {
                 LOG.info("handleSparkEvent - message: null");
             }
-
         }
     }
 
-    private static void logMsg(Message msg) {
-        LOG.info("Message id: {}, text '{}', created {}", msg.getId(), msg.getText(), msg.getCreated());
+    private void resetTempAccessToken() {
+        SparkClient.handleAccessTokenChange(this.accessToken);
     }
 
-    private static void logRoom(Room room) {
-        LOG.info("Room: title {}, id {}, created {}", room.getTitle(), room.getId(), room.getCreated());
+    private void setTempAccessToken(String accessToken) {
+        this.accessToken = SparkClient.getLastAccessToken();
+        SparkClient.handleAccessTokenChange(accessToken);
     }
 
-    private static void logTeam(Team team) {
-        LOG.info("Created team '{}', id: {}, created {}", team.getName(), team.getId(), team.getCreated());
+    private static void logMsg(String intro, Message msg) {
+        LOG.info("{} message id: {}, text: '{}', created: {}",
+                intro, msg.getId(), msg.getText(), msg.getCreated());
+    }
+
+    private static void logRoom(String intro, Room room) {
+        LOG.info("{} room title: {}, id: {}, created: {}",
+                intro, room.getTitle(), room.getId(), room.getCreated());
+    }
+
+    private static void logTeam(String intro, Team team) {
+        LOG.info("{} team: '{}', id: {}, created: {}",
+                intro, team.getName(), team.getId(), team.getCreated());
     }
 }

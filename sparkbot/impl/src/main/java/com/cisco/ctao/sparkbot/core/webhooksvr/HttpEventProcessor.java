@@ -94,7 +94,7 @@ class HttpEventProcessor extends AbstractHandler {
      */
     private boolean processHttpMessage(final Request baseRequest, final String uri, final String payload) {
         final RequestHeaderData headers = getRequestHeaderData(baseRequest);
-        LOG.info("payload: {}, uri {}", payload, uri);
+        LOG.debug("payload: {}, uri {}", payload, uri);
 
         try {
             final WebhookEvent msg = gson.fromJson(payload, WebhookEvent.class);

@@ -94,7 +94,7 @@ public class Teams {
      * @param teamId id of the Team to be deleted
      */
     public static void deleteTeam(final String teamId) {
-        LOG.info("deleteMessqge: TeamId '{}'", teamId);
+        LOG.info("deleteTeam: TeamId '{}'", teamId);
         TEAM_API.delete(teamId);
     }
 }

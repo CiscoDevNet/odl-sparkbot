@@ -21,6 +21,7 @@ public final class SparkClient {
     private static final Logger LOG = LoggerFactory.getLogger(SparkClient.class);
     private static final String BEARER_TOKEN = "Bearer ";
     private static Spark spark = Spark.builder().accessToken(BEARER_TOKEN).build();
+    private static String lastAccessToken;
 
     private SparkClient() {
         LOG.info("SparkClient created");
@@ -30,12 +31,15 @@ public final class SparkClient {
      * @param accessToken: new access token for the Spark client
      */
     public static void handleAccessTokenChange(final String accessToken) {
+        lastAccessToken = accessToken;
         if (accessToken != null) {
             spark = Spark
                     .builder()
                     .accessToken(BEARER_TOKEN + accessToken)
                     .build();
             LOG.info("SparkClient: accessToken set to '{}'",accessToken);
+        } else {
+            handleConfigParmsDelete();
         }
     }
 
@@ -43,6 +47,7 @@ public final class SparkClient {
      *
      */
     public static void handleConfigParmsDelete() {
+        lastAccessToken = null;
         spark = Spark
                 .builder()
                 .accessToken(BEARER_TOKEN)
@@ -55,5 +60,9 @@ public final class SparkClient {
      */
     public static Spark getSpark() {
         return spark;
+    }
+
+    public static String getLastAccessToken() {
+        return lastAccessToken;
     }
 }

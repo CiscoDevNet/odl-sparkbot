@@ -106,7 +106,7 @@ public class TeamMemberships {
      */
     public static TeamMembership updateTeamMembership(final String teamMembershipId,
             final boolean isModerator) {
-        LOG.info("createTeamMembership: id {}, isModerator {}", teamMembershipId, isModerator);
+        LOG.info("updateTeamMembership: id {}, isModerator {}", teamMembershipId, isModerator);
 
         final TeamMembership teamMembership = new TeamMembership();
         teamMembership.setIsModerator(isModerator);
@@ -117,7 +117,7 @@ public class TeamMemberships {
      * @param teamMembershipId id of the TeamMembership to be deleted
      */
     public static void deleteTeamMembership(final String teamMembershipId) {
-        LOG.info("deleteMessqge: teamMembershipId '{}'", teamMembershipId);
+        LOG.info("deleteTeamMembership: id '{}'", teamMembershipId);
         TEAM_MEMBERSHIP_API.delete(teamMembershipId);
     }
 }

@@ -117,7 +117,7 @@ public class Memberships {
      * @return updated Membership object
      */
     public static Membership updateMembership(final String membershipId, final boolean isModerator) {
-        LOG.info("createMembership: membershipId {}, isModerator {}",
+        LOG.info("updateMembership: membershipId {}, isModerator {}",
                 membershipId, isModerator);
         final Membership membership = new Membership();
         membership.setIsModerator(isModerator);
@@ -128,7 +128,7 @@ public class Memberships {
      * @param membershipId id of the Membership to be deleted
      */
     public static void deleteMembership(final String membershipId) {
-        LOG.info("deleteMessqge: MembershipId '{}'", membershipId);
+        LOG.info("deleteMembership: id '{}'", membershipId);
         MEMBERSHIP_API.delete(membershipId);
     }
 
