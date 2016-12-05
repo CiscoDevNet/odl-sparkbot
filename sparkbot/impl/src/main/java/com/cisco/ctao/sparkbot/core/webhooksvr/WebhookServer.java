@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
  */
 public final class WebhookServer {
     private static final Logger LOG = LoggerFactory.getLogger(WebhookServer.class);
+    private static final String EVT_HANDLER_METHOD_NAME = "handleSparkEvent";
 
     private final HttpEventProcessor httpHandler = new HttpEventProcessor();
     private final SparkEventProcessor<Message> msgEventProcessor =
@@ -54,134 +55,93 @@ public final class WebhookServer {
     /** Registers a 'raw' webhook handler.
      * @param handler: the handler to be registered
      */
-    public void registerWebhookHandler(final WebhookEventHandler handler) {
-        httpHandler.registerWebhookHandler(handler);
+    public static void registerWebhookHandler(final WebhookEventHandler handler) {
+        getInstance().httpHandler.registerWebhookHandler(handler);
     }
 
     /** Unregisters a 'raw' webhook handler.
      * @param handler: the handler to be registered
      */
-    public void unregisterWebhookHandler(final WebhookEventHandler handler) {
-        httpHandler.unregisterWebhookHandler(handler);
+    public static void unregisterWebhookHandler(final WebhookEventHandler handler) {
+        getInstance().httpHandler.unregisterWebhookHandler(handler);
     }
 
+    /** Get the Spark class for which the handler has been instantiated
+     *  (Message, Room, or Membership). Basically, find the 1st method in
+     *  the handler class that matches the handler method name.
+     * @param handler reference to a handler from which to get the class
+     * @return the class for which the handler has been instantiated
+     */
+    private static <T> Class<?> findEventHandlerClass(final SparkEventHandler<T> handler) {
+        for (Method m : handler.getClass().getMethods()) {
+            if (EVT_HANDLER_METHOD_NAME.equals(m.getName())) {
+                Class<?>[] handlerParams = m.getParameterTypes();
+                if (handlerParams.length == 3) {
+                    return m.getParameterTypes()[1];
+                } else {
+                    LOG.error("Spark event handler in class {} has invalid number of parameters {}",
+                            handler.getClass().getName(), handlerParams.length);
+                }
+            }
+        }
+        LOG.error("Spark event handler not found in class {}", handler.getClass());
+        return null;
+    }
+
+    /** Register a handler to process Spark webhook events.
+     * @param handler reference to the handler to be registered. A handler
+     *          can be parameterized to a Message, Room, or Membership.
+     */
     @SuppressWarnings("unchecked")
     public static <T> void registerSparkEventHandler(final SparkEventHandler<T> handler) {
-        Method eventHandler = handler.getClass().getMethods()[0];
-        if ("handleSparkEvent".equals(eventHandler.getName())) {
-            Class<?> clazz = eventHandler.getParameterTypes()[1];
+        Class<?> clazz = findEventHandlerClass(handler);
+        if (clazz != null) {
             if (Message.class.isAssignableFrom(clazz)) {
                 SparkEventProcessor<Message> evtProc = getInstance().msgEventProcessor;
                 if (evtProc.registerHandler((SparkEventHandler<Message>) handler) == 0) {
-                    getInstance().registerWebhookHandler(evtProc);
+                    registerWebhookHandler(evtProc);
                 }
             } else if (Room.class.isAssignableFrom(clazz)) {
                 SparkEventProcessor<Room> evtProc = getInstance().roomEventProcessor;
                 if (evtProc.registerHandler((SparkEventHandler<Room>) handler) == 0) {
-                    getInstance().registerWebhookHandler(evtProc);
+                    registerWebhookHandler(evtProc);
                 }
             } else if (Membership.class.isAssignableFrom(clazz)) {
                 SparkEventProcessor<Membership> evtProc = getInstance().membershipEventProcessor;
                 if (evtProc.registerHandler((SparkEventHandler<Membership>) handler) == 0) {
-                    getInstance().registerWebhookHandler(evtProc);
+                    registerWebhookHandler(evtProc);
                 }
             } else {
                 LOG.error("Invalid event handler object, sparkEventHandler method {}", clazz.getName());
             }
-        } else {
-            LOG.error("Invalid event handler method, sparkEventHandler method {}", eventHandler.getName());
         }
     }
 
+    /** Unregister a previously registered Spark webhook event handler.
+     * @param handler reference to the handler to be unregistered.
+     */
     @SuppressWarnings("unchecked")
     public static <T> void unregisterSparkEventHandler(final SparkEventHandler<T> handler) {
-        Method eventHandler = handler.getClass().getMethods()[0];
-        if ("handleSparkEvent".equals(eventHandler.getName())) {
-            Class<?> clazz = eventHandler.getParameterTypes()[1];
+        Class<?> clazz = findEventHandlerClass(handler);
+        if (clazz != null) {
             if (Message.class.isAssignableFrom(clazz)) {
                 SparkEventProcessor<Message> evtProc = getInstance().msgEventProcessor;
                 if (evtProc.unregisterHandler((SparkEventHandler<Message>) handler) == 0) {
-                    getInstance().unregisterWebhookHandler(evtProc);
+                    unregisterWebhookHandler(evtProc);
                 }
             } else if (Room.class.isAssignableFrom(clazz)) {
                 SparkEventProcessor<Room> evtProc = getInstance().roomEventProcessor;
                 if (evtProc.unregisterHandler((SparkEventHandler<Room>) handler) == 0) {
-                    getInstance().unregisterWebhookHandler(evtProc);
+                    unregisterWebhookHandler(evtProc);
                 }
             } else if (Membership.class.isAssignableFrom(clazz)) {
                 SparkEventProcessor<Membership> evtProc = getInstance().membershipEventProcessor;
                 if (evtProc.unregisterHandler((SparkEventHandler<Membership>) handler) == 0) {
-                    getInstance().unregisterWebhookHandler(evtProc);
+                    unregisterWebhookHandler(evtProc);
                 }
             } else {
                 LOG.error("Invalid event handler object, sparkEventHandler method {}", clazz.getName());
             }
-        } else {
-            LOG.error("Invalid event handler method, sparkEventHandler method {}", eventHandler.getName());
-        }
-    }
-
-    /** Registers a message webhook handler.
-     * @param handler: the handler to be registered
-     */
-    public void registerWebhookMessageHandler(final SparkEventHandler<Message> handler) {
-        if (httpHandler != null) {
-            LOG.info("Registering SparkEventHandler<Message> {}", handler);
-            if (msgEventProcessor.registerHandler(handler) == 0) {
-                registerWebhookHandler(msgEventProcessor);
-            }
-        }
-    }
-
-    /** Unregisters a message webhook handler.
-     * @param handler: the handler to be registered
-     */
-    public void unregisterWebhookMessageHandler(final SparkEventHandler<Message> handler) {
-        if (httpHandler != null) {
-            LOG.info("Unregistering SparkEventHandler<Message> {}", handler);
-            if (msgEventProcessor.unregisterHandler(handler) == 0) {
-                unregisterWebhookHandler(msgEventProcessor);
-            }
-        }
-    }
-
-    /** Register an application webhook room handler.
-     * @param handler: the handler to be registered
-     */
-    public void registerWebhookRoomHandler(final SparkEventHandler<Room> handler) {
-        LOG.info("Registering SparkEventHandler<Room> {}", handler);
-        if (roomEventProcessor.registerHandler(handler) == 0) {
-            registerWebhookHandler(roomEventProcessor);
-        }
-    }
-
-    /** Unregister an application webhook room handler.
-     * @param handler: the handler to be registered
-     */
-    public void unregisterWebhookRoomHandler(final SparkEventHandler<Room> handler) {
-        LOG.info("Unregistering SparkEventHandler<Room> {}", handler);
-        if (roomEventProcessor.unregisterHandler(handler) == 0) {
-            unregisterWebhookHandler(roomEventProcessor);
-        }
-    }
-
-    /** Register an application webhook room handler.
-     * @param handler: the handler to be registered
-     */
-    public void registerWebhookMembershipHandler(final SparkEventHandler<Membership> handler) {
-        LOG.info("Registering SparkEventHandler<Membership> {}", handler);
-        if (membershipEventProcessor.registerHandler(handler) == 0) {
-            registerWebhookHandler(membershipEventProcessor);
-        }
-    }
-
-    /** Unregister an application webhook room handler.
-     * @param handler: the handler to be registered
-     */
-    public void unregisterWebhookMembershipHandler(final SparkEventHandler<Membership> handler) {
-        LOG.info("Unregistering SparkEventHandler<Membership> {}", handler);
-        if (membershipEventProcessor.unregisterHandler(handler) == 0) {
-            unregisterWebhookHandler(membershipEventProcessor);
         }
     }
 

@@ -37,7 +37,8 @@ public class HelloWorldApp {
         LOG.info("*** HelloWorld run started.");
 
         // Register our example message event handler with Sparkbot
-        WebhookServer.registerSparkEventHandler(new HelloWorldMsgHandler());
+        HelloWorldMsgHandler msgHandler = new HelloWorldMsgHandler();
+        WebhookServer.registerSparkEventHandler(msgHandler);
 
         // First, create a team
         Team team = Teams.createTeam("Team Fortress");
@@ -73,23 +74,14 @@ public class HelloWorldApp {
         Room updatedRoom = Rooms.updateRoom(rooms.get(0).getId(), "Team Fortress 2");
         logRoom(updatedRoom);
 
+        // Unregister our example message event handler
+        WebhookServer.unregisterSparkEventHandler(msgHandler);
+
         // Delete the team we created at the beginning; this deletes the
         // team's room also and all messages in it.
         Teams.deleteTeam(team.getId());
 
         LOG.info("*** HelloWorld run finished.");
-    }
-
-    private static void logMsg(Message msg) {
-        LOG.info("Message id: {}, text '{}', created {}", msg.getId(), msg.getText(), msg.getCreated());
-    }
-
-    private static void logRoom(Room room) {
-        LOG.info("Room: title {}, id {}, created {}", room.getTitle(), room.getId(), room.getCreated());
-    }
-
-    private static void logTeam(Team team) {
-        LOG.info("Created team '{}', id: {}, created {}", team.getName(), team.getId(), team.getCreated());
     }
 
     /** Hello World event handler for messages. Handles message events coming
@@ -116,6 +108,17 @@ public class HelloWorldApp {
             }
 
         }
+    }
 
+    private static void logMsg(Message msg) {
+        LOG.info("Message id: {}, text '{}', created {}", msg.getId(), msg.getText(), msg.getCreated());
+    }
+
+    private static void logRoom(Room room) {
+        LOG.info("Room: title {}, id {}, created {}", room.getTitle(), room.getId(), room.getCreated());
+    }
+
+    private static void logTeam(Team team) {
+        LOG.info("Created team '{}', id: {}, created {}", team.getName(), team.getId(), team.getCreated());
     }
 }

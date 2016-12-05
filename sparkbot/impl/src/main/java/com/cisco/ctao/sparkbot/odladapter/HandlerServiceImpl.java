@@ -51,25 +51,25 @@ public class HandlerServiceImpl implements SparkbotHandlersService {
             switch (input.getHandlerType()) {
                 case RAW:
                     if (testHandler != null) {
-                        WebhookServer.getInstance().unregisterWebhookHandler(testHandler);
+                        WebhookServer.unregisterWebhookHandler(testHandler);
                         testHandler = null;
                     }
                     break;
                 case MESSAGES:
                     if (msgTestHandler != null) {
-                        WebhookServer.getInstance().unregisterWebhookMessageHandler(msgTestHandler);
+                        WebhookServer.unregisterSparkEventHandler(msgTestHandler);
                         msgTestHandler = null;
                     }
                     break;
                 case ROOMS:
                     if (roomTestHandler != null) {
-                        WebhookServer.getInstance().unregisterWebhookRoomHandler(roomTestHandler);
+                        WebhookServer.unregisterSparkEventHandler(roomTestHandler);
                         roomTestHandler = null;
                     }
                     break;
                 case MEMBERSHIPS:
                     if (membershipTestHandler != null) {
-                        WebhookServer.getInstance().unregisterWebhookMembershipHandler(membershipTestHandler);
+                        WebhookServer.unregisterSparkEventHandler(membershipTestHandler);
                         membershipTestHandler = null;
                     }
                     break;
@@ -95,25 +95,25 @@ public class HandlerServiceImpl implements SparkbotHandlersService {
                 case RAW:
                     if (testHandler == null) {
                         testHandler = new WebhookTestHandler();
-                        WebhookServer.getInstance().registerWebhookHandler(testHandler);
+                        WebhookServer.registerWebhookHandler(testHandler);
                     }
                     break;
                 case MESSAGES:
                     if (msgTestHandler == null) {
                         msgTestHandler = new WebhookMessageTestHandler();
-                        WebhookServer.getInstance().registerWebhookMessageHandler(msgTestHandler);
+                        WebhookServer.registerSparkEventHandler(msgTestHandler);
                     }
                     break;
                 case ROOMS:
                     if (roomTestHandler == null) {
                         roomTestHandler = new WebhookRoomTestHandler();
-                        WebhookServer.getInstance().registerWebhookRoomHandler(roomTestHandler);
+                        WebhookServer.registerSparkEventHandler(roomTestHandler);
                     }
                     break;
                 case MEMBERSHIPS:
                     if (membershipTestHandler == null) {
                         membershipTestHandler = new WebhookMembershipTestHandler();
-                        WebhookServer.getInstance().registerWebhookMembershipHandler(membershipTestHandler);
+                        WebhookServer.registerSparkEventHandler(membershipTestHandler);
                     }
                     break;
                 default:

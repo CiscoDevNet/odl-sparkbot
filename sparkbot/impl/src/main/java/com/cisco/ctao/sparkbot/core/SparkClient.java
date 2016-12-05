@@ -10,7 +10,6 @@ package com.cisco.ctao.sparkbot.core;
 
 import com.ciscospark.Spark;
 
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.sparkbot.rev150105.spark.bot.master.config.parms.SparkBotMasterSessionDesc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
