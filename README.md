@@ -17,19 +17,7 @@ The integration of Sparkbot core with ODL is shown in the following figure:
 
 Note, however, that the Sparkbot core is not dependent on anything in ODL, it could be used as a library in any Java-based system. 
 
-## Installation
-### Prerequisites:
-* Java 8
-* [Apache Maven](https://maven.apache.org/) 3.3.X or later (3.3.9 preferred)
-* Set up your development environment for building OpenDaylight applications as outlined [here](https://wiki.opendaylight.org/view/GettingStarted:Development_Environment_Setup). In particular, make sure that the [settings for your local Maven repo](https://wiki.opendaylight.org/view/GettingStarted:Development_Environment_Setup#Edit_your_.7E.2F.m2.2Fsettings.xml) are set up properly.
-
-### Downloading and Building Sparkbot
-```
-    $ git clone https://github.com/CiscoDevNet/odl-sparkbot
-    $ cd sparkbot
-    $ mvn install -DskipTests
-```
-### Repository Structure
+## Repository Structure
 The folders in the Sparkbot project are as follows:
 * **images**: contains images for figures in this README file.
 * [**sparkjavasdk**](https://github.com/CiscoDevNet/odl-sparkbot/tree/master/sparkjavasdk): a slightly modified version of the [Spark Java SDK] (https://github.com/ciscospark/spark-java-sdk). You have to build this Sparkbot SDK version and install it in your local maven repo for Sparkbot to compile. Changes were made to the Spark API ([Spark.java](https://github.com/CiscoDevNet/odl-sparkbot/tree/master/sparkjavasdk/src/main/java/com/ciscospark/Spark.java)) and implementation ([SparkImpl.java](https://github.com/CiscoDevNet/odl-sparkbot/tree/master/sparkjavasdk/src/main/java/com/ciscospark/SparkImpl.java)), where we extended Spark to return a generic Spark [RequestBuilder](https://github.com/CiscoDevNet/odl-sparkbot/tree/master/sparkjavasdk/src/main/java/com/ciscospark/RequestBuilder.java). 
@@ -77,3 +65,31 @@ The folders in the Sparkbot project are as follows:
   * **api**: The [`api/src/main/yang`](https://github.com/CiscoDevNet/odl-sparkbot/tree/master/sparkbot/api/src/main/yang) folder contains yang models that define the Bot's REST and MD-SAL Java APIs
   * **app**: The [`app/src/main/java/com/cisco/ctao/sparkbot/application/`](https://github.com/CiscoDevNet/odl-sparkbot/tree/master/sparkbot/app/src/main/java/com/cisco/ctao/sparkbot/application) folder contains the code for the example Hello World application. Sparkbot application code should also reside in this folder. 
   * **impl**: The [`impl/src/main/java/cisco/ctao/sparkbot`](https://github.com/CiscoDevNet/odl-sparkbot/tree/master/sparkbot/impl/src/main/java/com/cisco/ctao/sparkbot) folder is where the Sparkbot code resides. The folder contains   the Sparkbot core and the Sparkbot ODL adapter. The ([Sparkbot core folder](https://github.com/CiscoDevNet/odl-sparkbot/tree/master/sparkbot/impl/src/main/java/com/cisco/ctao/sparkbot/core)) is where the implementations of the Sparkbot Object-Oriented API, the webhook server reside and the hte Spark event handler framework. This folder also holds examples of handlers for Spark Message, Membership and Room events. The [Sparkbot ODL adaptor folder](https://github.com/CiscoDevNet/odl-sparkbot/tree/master/sparkbot/impl/src/main/java/com/cisco/ctao/sparkbot/odladapter) contains code that integrates the Sparkbot core and the user applications into OpenDaylight.
+
+## Downloading, Building and Running Sparkbot
+### Prerequisites:
+* Java 8
+* [Apache Maven](https://maven.apache.org/) 3.3.X or later (3.3.9 preferred)
+* Set up your development environment for building OpenDaylight applications as outlined [here](https://wiki.opendaylight.org/view/GettingStarted:Development_Environment_Setup). In particular, make sure that the [settings for your local Maven repo](https://wiki.opendaylight.org/view/GettingStarted:Development_Environment_Setup#Edit_your_.7E.2F.m2.2Fsettings.xml) are set up properly.
+
+### Downloading Sparkbot
+Download Sparkbot from the DevNet github:
+```
+    $ git clone https://github.com/CiscoDevNet/odl-sparkbot
+```
+### Building Sparkbot
+Build a ready-to-run Sparkbot image as follows:
+```
+    $ cd sparkbot
+    $ mvn install -DskipTests
+```
+### Running Sparkbot
+Run the newly built Sparkbot image as follows:
+```
+    $ ./sparkbot/karaf/target/assembly/bin/karaf
+```
+This starts the OpenDaylight controller and you should see the Karaf console shortly. At teh console prompt (`opendaylight-user@root>`),type:
+```
+opendaylight-user@root> log:tail
+```
+This keept printing the logs to the console. To get out of the log print mode, type `Ctrl-C`.
