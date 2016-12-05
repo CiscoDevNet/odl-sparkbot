@@ -7,10 +7,10 @@
  */
 package com.cisco.ctao.sparkbot.core.webhooksvr;
 
+import com.cisco.ctao.sparkbot.core.SparkEventHandler.EventType;
 import com.cisco.ctao.sparkbot.core.SparkApi;
 import com.cisco.ctao.sparkbot.core.SparkEventHandler;
 import com.cisco.ctao.sparkbot.core.WebhookEventHandler;
-import com.cisco.ctao.sparkbot.core.SparkEventHandler.EventType;
 import com.ciscospark.SparkException;
 
 import java.util.ArrayList;

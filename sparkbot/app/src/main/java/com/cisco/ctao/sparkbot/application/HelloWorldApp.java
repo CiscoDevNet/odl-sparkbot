@@ -9,12 +9,15 @@ package com.cisco.ctao.sparkbot.application;
 
 import com.cisco.ctao.sparkbot.core.Messages;
 import com.cisco.ctao.sparkbot.core.Rooms;
+import com.cisco.ctao.sparkbot.core.SparkEventHandler;
 import com.cisco.ctao.sparkbot.core.Teams;
+import com.cisco.ctao.sparkbot.core.webhooksvr.WebhookServer;
 import com.ciscospark.Message;
 import com.ciscospark.Room;
 import com.ciscospark.Team;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,8 +30,14 @@ import org.slf4j.LoggerFactory;
 public class HelloWorldApp {
     private static final Logger LOG = LoggerFactory.getLogger(HelloWorldApp.class);
 
+    /** This method is the entry point to run the Hello World example.
+     * @param accessToken the access token to be used to access Spark
+     */
     public void run(String accessToken) {
-        LOG.info("HelloWorld run started.");
+        LOG.info("*** HelloWorld run started.");
+
+        // Register our example message event handler with Sparkbot
+        WebhookServer.registerSparkEventHandler(new HelloWorldMsgHandler());
 
         // First, create a team
         Team team = Teams.createTeam("Team Fortress");
@@ -46,10 +55,8 @@ public class HelloWorldApp {
         // Send a few messages to the team's room
         Message msg1 = Messages.createMessage(rooms.get(0).getId(), "Message #1");
         logMsg(msg1);
-
         Message msg2 = Messages.createMessage(rooms.get(0).getId(), "Message #2");
         logMsg(msg2);
-
         Message msg3 = Messages.createMessage(rooms.get(0).getId(), "Message #3");
         logMsg(msg3);
 
@@ -70,7 +77,7 @@ public class HelloWorldApp {
         // team's room also and all messages in it.
         Teams.deleteTeam(team.getId());
 
-        LOG.info("HelloWorld run finished.");
+        LOG.info("*** HelloWorld run finished.");
     }
 
     private static void logMsg(Message msg) {
@@ -83,5 +90,32 @@ public class HelloWorldApp {
 
     private static void logTeam(Team team) {
         LOG.info("Created team '{}', id: {}, created {}", team.getName(), team.getId(), team.getCreated());
+    }
+
+    /** Hello World event handler for messages. Handles message events coming
+     *  from Spark. Note that only events specified in the Webhoo's filter
+     *  that the app created in Spark are sent to Sparkbot.
+     * @author jmedved
+     *
+     */
+    public class HelloWorldMsgHandler implements SparkEventHandler<Message> {
+        private final AtomicInteger eventCounter = new AtomicInteger();
+
+        @Override
+        public void handleSparkEvent(String elementId, Message message, SparkEventHandler.EventType eventType) {
+            LOG.info("handleSparkEvent - event #: {}, event type: {}",
+                    eventCounter.incrementAndGet(), eventType);
+            if (message != null) {
+                LOG.info("handleSparkEvent - message: id {}, roomId: {}, roomType: {}, text: '{}, "
+                        + "markdown: '{}', personId: {}, personEmail: {}, created: {}, mentionedPeople: {}",
+                        message.getId(), message.getRoomId(), message.getRoomType(), message.getText(),
+                        message.getMarkdown(), message.getPersonId(), message.getPersonEmail(),
+                        message.getCreated(), message.getMentionedPeople());
+            } else {
+                LOG.info("handleSparkEvent - message: null");
+            }
+
+        }
+
     }
 }

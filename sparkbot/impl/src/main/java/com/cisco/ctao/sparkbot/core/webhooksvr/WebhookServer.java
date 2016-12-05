@@ -16,8 +16,9 @@ import com.ciscospark.Membership;
 import com.ciscospark.Message;
 import com.ciscospark.Room;
 
+import java.lang.reflect.Method;
+
 import org.eclipse.jetty.server.Server;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.sparkbot.rev150105.SparkBotWebHookParms;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,17 +55,69 @@ public final class WebhookServer {
      * @param handler: the handler to be registered
      */
     public void registerWebhookHandler(final WebhookEventHandler handler) {
-        if (httpHandler != null) {
-            httpHandler.registerWebhookHandler(handler);
-        }
+        httpHandler.registerWebhookHandler(handler);
     }
 
     /** Unregisters a 'raw' webhook handler.
      * @param handler: the handler to be registered
      */
     public void unregisterWebhookHandler(final WebhookEventHandler handler) {
-        if (httpHandler != null) {
-            httpHandler.unregisterWebhookHandler(handler);
+        httpHandler.unregisterWebhookHandler(handler);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> void registerSparkEventHandler(final SparkEventHandler<T> handler) {
+        Method eventHandler = handler.getClass().getMethods()[0];
+        if ("handleSparkEvent".equals(eventHandler.getName())) {
+            Class<?> clazz = eventHandler.getParameterTypes()[1];
+            if (Message.class.isAssignableFrom(clazz)) {
+                SparkEventProcessor<Message> evtProc = getInstance().msgEventProcessor;
+                if (evtProc.registerHandler((SparkEventHandler<Message>) handler) == 0) {
+                    getInstance().registerWebhookHandler(evtProc);
+                }
+            } else if (Room.class.isAssignableFrom(clazz)) {
+                SparkEventProcessor<Room> evtProc = getInstance().roomEventProcessor;
+                if (evtProc.registerHandler((SparkEventHandler<Room>) handler) == 0) {
+                    getInstance().registerWebhookHandler(evtProc);
+                }
+            } else if (Membership.class.isAssignableFrom(clazz)) {
+                SparkEventProcessor<Membership> evtProc = getInstance().membershipEventProcessor;
+                if (evtProc.registerHandler((SparkEventHandler<Membership>) handler) == 0) {
+                    getInstance().registerWebhookHandler(evtProc);
+                }
+            } else {
+                LOG.error("Invalid event handler object, sparkEventHandler method {}", clazz.getName());
+            }
+        } else {
+            LOG.error("Invalid event handler method, sparkEventHandler method {}", eventHandler.getName());
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> void unregisterSparkEventHandler(final SparkEventHandler<T> handler) {
+        Method eventHandler = handler.getClass().getMethods()[0];
+        if ("handleSparkEvent".equals(eventHandler.getName())) {
+            Class<?> clazz = eventHandler.getParameterTypes()[1];
+            if (Message.class.isAssignableFrom(clazz)) {
+                SparkEventProcessor<Message> evtProc = getInstance().msgEventProcessor;
+                if (evtProc.unregisterHandler((SparkEventHandler<Message>) handler) == 0) {
+                    getInstance().unregisterWebhookHandler(evtProc);
+                }
+            } else if (Room.class.isAssignableFrom(clazz)) {
+                SparkEventProcessor<Room> evtProc = getInstance().roomEventProcessor;
+                if (evtProc.unregisterHandler((SparkEventHandler<Room>) handler) == 0) {
+                    getInstance().unregisterWebhookHandler(evtProc);
+                }
+            } else if (Membership.class.isAssignableFrom(clazz)) {
+                SparkEventProcessor<Membership> evtProc = getInstance().membershipEventProcessor;
+                if (evtProc.unregisterHandler((SparkEventHandler<Membership>) handler) == 0) {
+                    getInstance().unregisterWebhookHandler(evtProc);
+                }
+            } else {
+                LOG.error("Invalid event handler object, sparkEventHandler method {}", clazz.getName());
+            }
+        } else {
+            LOG.error("Invalid event handler method, sparkEventHandler method {}", eventHandler.getName());
         }
     }
 
