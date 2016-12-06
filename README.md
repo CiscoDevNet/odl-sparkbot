@@ -103,3 +103,11 @@ Replace the `<your-access-token-here>` stanza with your real access token and tr
 ```
 opendaylight-user@root> log:display |grep HelloWorldApp
 ```
+## Working with the Sparkbot Code
+### Client APIs
+The following set of APIs are supported:
+
+### Sparkbot Event Handlers
+The Sparkbot framework supports the full set of Cisco Spark webhook events, see https://developer.ciscospark.com/webhooks-explained.html
+
+Register/Unregister Handlers
