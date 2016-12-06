@@ -83,7 +83,7 @@ Build a ready-to-run Sparkbot image as follows:
     $ cd sparkbot
     $ mvn install -DskipTests
 ```
-### Running Sparkbot
+### Starting Sparkbot
 Run the newly built Sparkbot image as follows:
 ```
     $ ./sparkbot/karaf/target/assembly/bin/karaf
@@ -92,4 +92,14 @@ This starts the OpenDaylight controller and you should see the Karaf console sho
 ```
 opendaylight-user@root> log:tail
 ```
-This keept printing the logs to the console. To get out of the log print mode, type `Ctrl-C`.
+The above command will put the console into the log-printing mode. To get out of the log-printing mode, type `Ctrl-C`.
+
+### Running the Test Application
+The trigger to run the Test Application is wired to Sparbot's REST (actually, [RESTCONF](https://datatracker.ietf.org/doc/draft-ietf-netconf-restconf/)) API and to its GUI. That means, you can trigger the Test App to run using Postman, curl, or from your browser. To start a test application run, use the following curl command:
+```
+   $ curl -u admin:admin --verbose -H "Accept: application/json" -H "Content-type: application/json" -X POST -d '{"input": {"access-token": "<your-access-token-here>"} }' http://localhost:8181/restconf/operations/sparkbot-hello-world:run
+```
+Replace the `<your-access-token-here>` stanza with your real access token and try the run the command. The test program prints what it's doing to the log, so you have to look at the log to see what is going on. To see only the logs printed by the Test Application, type the following command at the karaf console:
+```
+opendaylight-user@root> log:display |grep HelloWorldApp
+```
