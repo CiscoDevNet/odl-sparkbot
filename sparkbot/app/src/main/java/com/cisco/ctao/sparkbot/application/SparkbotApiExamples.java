@@ -28,25 +28,27 @@ import org.slf4j.LoggerFactory;
  * @author jmedved
  *
  */
-public class HelloWorldApp {
-    private static final Logger LOG = LoggerFactory.getLogger(HelloWorldApp.class);
+public class SparkbotApiExamples {
+    private static final Logger LOG = LoggerFactory.getLogger(SparkbotApiExamples.class);
     private String accessToken;
 
     /** This method is the entry point to run the Hello World example.
      * @param accessToken the access token to be used to access Spark
      */
     public void run(String accessToken) {
-        LOG.info("*** HelloWorld run started.");
+        LOG.info("*** SparkbotApiExamples run started.");
 
+        // If specified, override the default access token in the config
+        // data store
         setTempAccessToken(accessToken);
 
         // Register our example message event handler with Sparkbot
-        HelloWorldMsgHandler msgHandler = new HelloWorldMsgHandler();
+        SparkbotApisMsgHandler msgHandler = new SparkbotApisMsgHandler();
         WebhookServer.registerSparkEventHandler(msgHandler);
 
         // First, create a team
         Team team = Teams.createTeam("Team Fortress");
-        logTeam("Created team", team);
+        logTeam("Created team...", team);
 
         // Now, list all rooms for the newly created team. To get the rooms
         // for only our newly created team, we specify the team's Id as a
@@ -87,9 +89,10 @@ public class HelloWorldApp {
         Teams.deleteTeam(team.getId());
         logTeam("Deleted team...", team);
 
+        // Restore the access token to its original configured value
         resetTempAccessToken();
 
-        LOG.info("*** HelloWorld run finished.");
+        LOG.info("*** SparkbotApiExamples run finished.");
     }
 
     /** Hello World event handler for messages. Handles message events coming
@@ -98,7 +101,7 @@ public class HelloWorldApp {
      * @author jmedved
      *
      */
-    public class HelloWorldMsgHandler implements SparkEventHandler<Message> {
+    public class SparkbotApisMsgHandler implements SparkEventHandler<Message> {
         private final AtomicInteger eventCounter = new AtomicInteger();
 
         @Override
@@ -118,12 +121,21 @@ public class HelloWorldApp {
     }
 
     private void resetTempAccessToken() {
-        SparkClient.handleAccessTokenChange(this.accessToken);
+        if (!this.accessToken.equals(SparkClient.getLastAccessToken())) {
+            SparkClient.handleAccessTokenChange(this.accessToken);
+        }
     }
 
     private void setTempAccessToken(String accessToken) {
         this.accessToken = SparkClient.getLastAccessToken();
-        SparkClient.handleAccessTokenChange(accessToken);
+        if (accessToken == null) {
+            if (this.accessToken == null) {
+                LOG.error("Access token not specified - API calls will fail");
+            }
+        } else {
+            // Override the default access token
+            SparkClient.handleAccessTokenChange(accessToken);
+        }
     }
 
     private static void logMsg(String intro, Message msg) {

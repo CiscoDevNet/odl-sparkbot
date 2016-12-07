@@ -32,7 +32,7 @@ public class SparkbotAppProvider implements SparkbotHelloWorldService {
     private static final Logger LOG = LoggerFactory.getLogger(SparkbotAppProvider.class);
     private final RpcProviderRegistry rpcProviderRegistry;
     private RpcRegistration<SparkbotHelloWorldService> rpcReg;
-    private final HelloWorldApp helloWorld = new HelloWorldApp();
+    private final SparkbotApiExamples helloWorld = new SparkbotApiExamples();
 
     /** Constructor.
       * @param rpcProviderRegistry: reference to the MD-SAL RPC registry.
@@ -63,7 +63,8 @@ public class SparkbotAppProvider implements SparkbotHelloWorldService {
         if (input != null) {
             helloWorld.run(input.getAccessToken());
         } else {
-            LOG.error("access token not specified!");
+            LOG.info("access token not specified");
+            helloWorld.run(null);
         }
         return Futures.immediateFuture( RpcResultBuilder.<Void>success().build() );
     }

@@ -122,7 +122,9 @@ public final class Messages {
         message.setPersonEmail(toPersonEmail);
         message.setText(text);
         message.setMarkdown(markdown);
-        message.setFiles(files);
+        if (files != null) {
+            message.setFiles(files);
+        }
 
         return MESSAGE_API.create(message);
     }
