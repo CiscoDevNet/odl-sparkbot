@@ -9,6 +9,8 @@ package com.cisco.ctao.sparkbot.core;
 
 import com.ciscospark.Message;
 import com.google.common.base.Preconditions;
+
+import java.net.URI;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,24 +93,28 @@ public final class Messages {
      * @return the newly created message that was posted to the room
      */
     public static Message createMessage(final String roomId, final String text) {
-        return createMessage(roomId, null, null, text, null);
+        return createMessage(roomId, null, null, text, null, null);
     }
 
             /** Send a message to a room or a person. One of roomId, personId or
      *  personEmail must not be null
-     * @param roomId Room to which to post the message; null if not specified
+     * @param roomId Room to which to post the message; mandatory
      * @param toPersonId Person to which to post the message; null if not
      *              specified.
      * @param toPersonEmail Email of the person to which to post the
      *              message (optional); null if not specified
      * @param text Text of the message; null if not specified
      * @param markdown The message in markdown format; null if not specified
+     * @param files A URL reference for the message attachment. See the
+     *          Content and Attachments Guide for the supported media types.
      * @return the newly created message that was posted to Spark
      */
     public static Message createMessage(final String roomId, final String toPersonId,
-            final String toPersonEmail, final String text, final String markdown) {
-        LOG.info("createMessage: roomId {}, toPersonId {}, toPersonEmail {}, text {}, markdown {}",
-                roomId, toPersonId, toPersonEmail, text, markdown);
+            final String toPersonEmail, final String text, final String markdown,
+            final URI files) {
+        LOG.info("createMessage: roomId {}, toPersonId {}, toPersonEmail {}, text {}, "
+                + "markdown {}, files {}",
+                roomId, toPersonId, toPersonEmail, text, markdown, files);
 
         final Message message = new Message();
         message.setRoomId(roomId);
@@ -116,6 +122,7 @@ public final class Messages {
         message.setPersonEmail(toPersonEmail);
         message.setText(text);
         message.setMarkdown(markdown);
+        message.setFiles(files);
 
         return MESSAGE_API.create(message);
     }

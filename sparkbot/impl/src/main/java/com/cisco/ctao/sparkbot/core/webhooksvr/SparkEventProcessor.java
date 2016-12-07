@@ -50,7 +50,7 @@ public class SparkEventProcessor<T> implements WebhookEventHandler {
         LOG.debug("{}: handleDeletedEvent id {}, resource '{}', registered handlers {}",
                 this.getClass().getName(), elementId, resource, handlers.size());
         for (SparkEventHandler<T> handler : handlers) {
-            handler.handleSparkEvent(elementId, null, EventType.Deleted);
+            handler.handleSparkEvent(elementId, null, EventType.DELETED);
         }
     }
 
@@ -68,10 +68,10 @@ public class SparkEventProcessor<T> implements WebhookEventHandler {
                 && (elementId = msgData.getId()) != null) {
             switch (webhookMsg.getEvent()) {
                 case "created":
-                    handleCreatedUpdatedEvent(elementId, EventType.Created);
+                    handleCreatedUpdatedEvent(elementId, EventType.CREATED);
                     break;
                 case "updated":
-                    handleCreatedUpdatedEvent(elementId, EventType.Updated);
+                    handleCreatedUpdatedEvent(elementId, EventType.UPDATED);
                     break;
                 case "deleted":
                     handleDeletedEvent(elementId);

@@ -46,7 +46,7 @@ public final class Webhooks {
     }
 
     /** Get a list of webhooks for the user whose authentications we're using.
-     * @param max max number of webhooks to returns; null if not specified
+     * @param max Limit the maximum number of webhooks in the response; null if not specified
      * @return List of user's webooks
      */
     public static List<Webhook> listWebhooks(final Integer max) {
@@ -59,12 +59,28 @@ public final class Webhooks {
         return WEBHOOK_API.list(queryParams);
     }
 
+    /** Shows details for a webhook, by ID.
+     * @param webhookId Id of the webhook for which to get details
+     * @return the updated webhook
+     */
     public static Webhook getWebhookDetails(String webhookId) {
         LOG.info("getWebhookDetails: webhookId {}", webhookId);
         return WEBHOOK_API.getDetails(webhookId);
     }
 
 
+    /** Creates a webhook.
+     * @param name A user-friendly name for this webhook; mandatory
+     * @param targetURL The URL that receives POST requests for each event;
+     *          mandatory
+     * @param resource The resource type for the webhook; mandatory
+     * @param event The event type for the webhook; mandatory
+     * @param filter The filter that defines the webhook scope; null if not
+     *          specified
+     * @param secret secret used to generate payload signature; null if not
+     *          specified
+     * @return the newly created webhook
+     */
     public static Webhook createWebhook(String name, URI targetURL, String resource,
             String event, String filter, String secret) {
         LOG.info("createWebhook: name {}, targetURL: {}, resource: {}, event: {}, "
@@ -83,6 +99,13 @@ public final class Webhooks {
         return WEBHOOK_API.create(webhook);
     }
 
+    /** Updates a webhook, by ID.
+     * @param webhookId The Id of the Webhook to be updated
+     * @param name A user-friendly name for this webhook; mandatory
+     * @param targetUrl The URL that receives POST requests for each event;
+     *          mandatory
+     * @return the updated webhook
+     */
     public static Webhook updateWebhook(String webhookId, String name, URI targetUrl) {
         LOG.info("updateWebhook: webhookId {}", webhookId);
 
@@ -92,6 +115,9 @@ public final class Webhooks {
         return WEBHOOK_API.update(webhookId, webhook);
     }
 
+    /** Deletes a webhook, by ID.
+     * @param webhookId The Id of the Webhook to be updated
+     */
     public static void deleteWebhook(String webhookId) {
         LOG.info("deleteWebhook: webhookId {}", webhookId);
         WEBHOOK_API.delete(webhookId);

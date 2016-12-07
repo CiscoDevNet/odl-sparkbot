@@ -91,11 +91,13 @@ public class Memberships {
 
     /** Create a new Membership in Spark Add someone to a room by Person ID
      *  or email address; optionally making them a moderator.
-     * @param roomId Room where to create the membership
-     * @param personId Person for whom to create the membership
+     * @param roomId Room where to create the membership; mandatory
+     * @param personId Person for whom to create the membership; null if not
+     *          specified
      * @param personEmail Email of the person  for whom to create the
-     *                     membership
-     * @param isModerator make the person a moderator (optional)
+     *                     membership; null if not specified
+     * @param isModerator make the person a moderator (optional); null if
+     *          not specified
      * @return the newly created Membership that was created in Spark
      */
     public static Membership createMembership(final String roomId, final String personId,
@@ -113,7 +115,8 @@ public class Memberships {
 
     /** Update a Membership .
      * @param membershipId id of the Membership which should be updated
-     * @param isModerator Update value - give or revoke moderator rights
+     * @param isModerator Update value - give or revoke moderator rights;
+     *          mandatory
      * @return updated Membership object
      */
     public static Membership updateMembership(final String membershipId, final boolean isModerator) {
