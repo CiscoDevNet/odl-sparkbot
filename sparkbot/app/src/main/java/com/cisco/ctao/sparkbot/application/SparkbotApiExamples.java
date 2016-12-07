@@ -121,7 +121,8 @@ public class SparkbotApiExamples {
     }
 
     private void resetTempAccessToken() {
-        if (!this.accessToken.equals(SparkClient.getLastAccessToken())) {
+        if (this.accessToken != null
+                && !this.accessToken.equals(SparkClient.getLastAccessToken())) {
             SparkClient.handleAccessTokenChange(this.accessToken);
         }
     }
