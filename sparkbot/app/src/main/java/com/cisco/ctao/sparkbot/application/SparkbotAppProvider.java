@@ -68,5 +68,4 @@ public class SparkbotAppProvider implements SparkbotHelloWorldService {
         }
         return Futures.immediateFuture( RpcResultBuilder.<Void>success().build() );
     }
-
 }

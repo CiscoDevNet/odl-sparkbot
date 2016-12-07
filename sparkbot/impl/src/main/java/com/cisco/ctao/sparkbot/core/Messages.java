@@ -125,7 +125,6 @@ public final class Messages {
         if (files != null) {
             message.setFiles(files);
         }
-
         return MESSAGE_API.create(message);
     }
 
