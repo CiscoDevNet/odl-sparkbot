@@ -18,7 +18,14 @@ module sparkbot-hello-world {
                 type string;
                 mandatory true;
                 description
-                    "The access token to be used to access Spark.";
+                    "Optional access token that overrides the default
+                    access token in the config data store.";
+            }
+            leaf webhook-http-port {
+                type uint32;
+                description
+                    "Optional port number that overrides the default port
+                    number for the Sparkbot HTTP server.";
             }
         }
     }

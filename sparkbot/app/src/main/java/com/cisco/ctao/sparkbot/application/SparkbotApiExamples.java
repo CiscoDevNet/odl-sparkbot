@@ -30,67 +30,65 @@ import org.slf4j.LoggerFactory;
  */
 public class SparkbotApiExamples {
     private static final Logger LOG = LoggerFactory.getLogger(SparkbotApiExamples.class);
-    private String accessToken;
+    private String originalAccessToken;
+    private Long originalHttpPort;
 
     /** This method is the entry point to run the Hello World example.
      * @param accessToken the access token to be used to access Spark
+     * @param httpPort http port where to start the webhook server
      */
-    public void run(String accessToken) {
+    public void run(String accessToken, Long httpPort) {
         LOG.info("*** SparkbotApiExamples run started.");
 
         // If specified, override the default access token in the config
         // data store
-        setTempAccessToken(accessToken);
+        overrideDefaultAccessToken(accessToken);
+        overrideDefaultHttpPort(httpPort);
 
-        // Register our example message event handler with Sparkbot
-        SparkbotApisMsgHandler msgHandler = new SparkbotApisMsgHandler();
-        WebhookServer.registerSparkEventHandler(msgHandler);
-
-        // First, create a team
-        Team team = Teams.createTeam("Team Fortress");
-        logTeam("Created team...", team);
-
-        // Now, list all rooms for the newly created team. To get the rooms
-        // for only our newly created team, we specify the team's Id as a
-        // query parameter.
-        List<Room> rooms = Rooms.listRooms(null, team.getId(), null);
-        LOG.info("Team's '{}' rooms:", team.getName());
-        for (Room room : rooms) {
-            logRoom(" -", room);
+        try {
+            // Register our example message event handler with Sparkbot
+            SparkbotApisMsgHandler msgHandler = new SparkbotApisMsgHandler();
+            WebhookServer.registerSparkEventHandler(msgHandler);
+            // First, create a team
+            Team team = Teams.createTeam("Team Fortress");
+            logTeam("Created team...", team);
+            // Now, list all rooms for the newly created team. To get the rooms
+            // for only our newly created team, we specify the team's Id as a
+            // query parameter.
+            List<Room> rooms = Rooms.listRooms(null, team.getId(), null);
+            LOG.info("Team's '{}' rooms:", team.getName());
+            for (Room room : rooms) {
+                logRoom(" -", room);
+            }
+            // Send a few messages to the team's room
+            Message msg1 = Messages.createMessage(rooms.get(0).getId(), "Message #1");
+            logMsg("Sent Message #1...", msg1);
+            Message msg2 = Messages.createMessage(rooms.get(0).getId(), "Message #2");
+            logMsg("Sent Message #2...", msg2);
+            Message msg3 = Messages.createMessage(rooms.get(0).getId(), "Message #3");
+            logMsg("Sent Message #3...", msg3);
+            // List all messages in the team's room:
+            List<Message> msgs = Messages.listMessages(rooms.get(0).getId(), null, null, null, null);
+            for (Message message : msgs) {
+                logMsg(" -", message);
+            }
+            // Delete Message #3
+            Messages.deleteMessage(msg1.getId());
+            logMsg("Deleted Message #3...", msg3);
+            // Update Room
+            Room updatedRoom = Rooms.updateRoom(rooms.get(0).getId(), "Team Fortress 2");
+            logRoom("Updated room...", updatedRoom);
+            // Unregister our example message event handler
+            WebhookServer.unregisterSparkEventHandler(msgHandler);
+            // Delete the team we created at the beginning; this deletes the
+            // team's room also and all messages in it.
+            Teams.deleteTeam(team.getId());
+            logTeam("Deleted team...", team);
+        } finally {
+            // Restore the access token to its original configured value
+            restoreDefaultAccessToken();
+            restoreDefaultHttpPort();
         }
-
-        // Send a few messages to the team's room
-        Message msg1 = Messages.createMessage(rooms.get(0).getId(), "Message #1");
-        logMsg("Sent Message #1...", msg1);
-        Message msg2 = Messages.createMessage(rooms.get(0).getId(), "Message #2");
-        logMsg("Sent Message #2...", msg2);
-        Message msg3 = Messages.createMessage(rooms.get(0).getId(), "Message #3");
-        logMsg("Sent Message #3...", msg3);
-
-        // List all messages in the team's room:
-        List<Message> msgs = Messages.listMessages(rooms.get(0).getId(), null, null, null, null);
-        for (Message message : msgs) {
-            logMsg(" -", message);
-        }
-
-        // Delete Message #3
-        Messages.deleteMessage(msg1.getId());
-        logMsg("Deleted Message #3...", msg3);
-
-        // Update Room
-        Room updatedRoom = Rooms.updateRoom(rooms.get(0).getId(), "Team Fortress 2");
-        logRoom("Updated room...", updatedRoom);
-
-        // Unregister our example message event handler
-        WebhookServer.unregisterSparkEventHandler(msgHandler);
-
-        // Delete the team we created at the beginning; this deletes the
-        // team's room also and all messages in it.
-        Teams.deleteTeam(team.getId());
-        logTeam("Deleted team...", team);
-
-        // Restore the access token to its original configured value
-        resetTempAccessToken();
 
         LOG.info("*** SparkbotApiExamples run finished.");
     }
@@ -120,22 +118,60 @@ public class SparkbotApiExamples {
         }
     }
 
-    private void resetTempAccessToken() {
-        if (this.accessToken != null
-                && !this.accessToken.equals(SparkClient.getLastAccessToken())) {
-            SparkClient.handleAccessTokenChange(this.accessToken);
+    private void restoreDefaultAccessToken() {
+        String overrideAccessToken = SparkClient.getLastAccessToken();
+        if (this.originalAccessToken != null) {
+            if (!this.originalAccessToken.equals(overrideAccessToken)) {
+                SparkClient.handleAccessTokenChange(this.originalAccessToken);
+            }
+        } else {
+            if (overrideAccessToken != null) {
+                SparkClient.handleConfigParmsDelete();
+            }
         }
+        this.originalAccessToken = null;
     }
 
-    private void setTempAccessToken(String accessToken) {
-        this.accessToken = SparkClient.getLastAccessToken();
+    private void overrideDefaultAccessToken(String accessToken) {
+        this.originalAccessToken = SparkClient.getLastAccessToken();
         if (accessToken == null) {
-            if (this.accessToken == null) {
+            if (this.originalAccessToken == null) {
                 LOG.error("Access token not specified - API calls will fail");
             }
         } else {
             // Override the default access token
             SparkClient.handleAccessTokenChange(accessToken);
+        }
+    }
+
+    private void restoreDefaultHttpPort() {
+        Long overrideHttpPort = WebhookServer.getWebhookServerPort();
+        LOG.info("restoreDefaultHttpPort: overrideHttpPort {}, originalHttpPort {}",
+                overrideHttpPort, this.originalHttpPort);
+        if (this.originalHttpPort != null) {
+            if (!this.originalHttpPort.equals(overrideHttpPort)) {
+                WebhookServer.getInstance().handleConfigParmsChange(originalHttpPort);
+            }
+        } else {
+            if (overrideHttpPort != null) {
+                WebhookServer.getInstance().handleConfigParmsDelete();
+            }
+        }
+        this.originalHttpPort = null;
+    }
+
+    private void overrideDefaultHttpPort(Long overrideHttpPort) {
+        this.originalHttpPort = WebhookServer.getWebhookServerPort();
+        LOG.info("overrideDefaultHttpPort, overrideHttpPort {}, originalHttpPort {}",
+                overrideHttpPort, this.originalHttpPort);
+        if (overrideHttpPort == null) {
+            if (this.originalHttpPort == null) {
+                LOG.error("HTTP Port not specified - webhook handlers will not be called");
+            }
+        } else {
+            // Override the default HTTP port and potentially restart
+            // the HTTP server
+            WebhookServer.getInstance().handleConfigParmsChange(overrideHttpPort);
         }
     }
 

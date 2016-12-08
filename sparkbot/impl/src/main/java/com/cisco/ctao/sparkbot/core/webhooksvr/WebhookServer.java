@@ -39,10 +39,19 @@ public final class WebhookServer {
             new SparkEventProcessor<>(Memberships.api(), "memberships");
 
     private Server httpServer;
+    private Integer httpPort;
     private static WebhookServer instance;
 
     private WebhookServer() {
         httpServer = null;
+    }
+
+    public static Long getWebhookServerPort() {
+        if (getInstance().httpPort != null) {
+            return getInstance().httpPort.longValue();
+        } else {
+            return null;
+        }
     }
 
     public static WebhookServer getInstance() {
@@ -149,6 +158,7 @@ public final class WebhookServer {
      * @param port the port on which to listen to requests
      */
     public void handleConfigParmsChange(final Long port) {
+        LOG.info("handleConfigParmsChange, port {}", port);
         if (port != null) {
             startHttpServer(port.intValue());
         }
@@ -158,6 +168,7 @@ public final class WebhookServer {
      *
      */
     public void handleConfigParmsDelete() {
+        LOG.info("handleConfigParmsDelete");
         stopHttpServer();
     }
 
@@ -167,26 +178,29 @@ public final class WebhookServer {
             return;
         }
 
-        httpServer = new Server(port);
-        httpServer.setHandler(httpHandler);
+        this.httpPort = port;
+        this.httpServer = new Server(port);
+        this.httpServer.setHandler(httpHandler);
         try {
             this.httpServer.start();
         } catch (Exception e) {
-            LOG.info("Exception: {}", e.toString());
-            httpServer = null;
+            LOG.error("Failed to start the webhook HTTP server, Exception: {}", e.toString());
+            this.httpServer = null;
+            this.httpPort = null;
             return;
         }
     }
 
     private void stopHttpServer() {
 
-        if (httpServer != null) {
+        if (this.httpServer != null) {
             try {
-                httpServer.stop();
+                this.httpServer.stop();
             } catch (Exception e) {
                 LOG.info("Exception: {}", e.toString());
             }
-            httpServer = null;
+            this.httpServer = null;
+            this.httpPort = null;
         }
     }
 }

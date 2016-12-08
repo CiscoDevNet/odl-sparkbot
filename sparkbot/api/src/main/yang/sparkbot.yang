@@ -30,7 +30,9 @@ module sparkbot {
     container spark-bot-web-hook-parms {
         leaf web-hook-http-port {
             type uint32;
-            description "An HTTP server will be started on this port once configured, delete the config to stop server";
+            description
+                "An HTTP server will be started on this port once
+                configured, delete the config to stop server";
         }
     }
 }
