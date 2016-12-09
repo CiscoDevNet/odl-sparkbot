@@ -132,3 +132,19 @@ Sparkbot 'Typed' event handlers must implement the Spark Event Handling API defi
 for the desired element type `<T>`. Messages, Rooms, and Memberships are the supported element types in Spark webhooks and they are all supported by the Sparkbot framework. For more details see https://developer.ciscospark.com/webhooks-explained.html.
 
 #### Registering/Unregistering Event Handlers
+The handler registration API for both 'Raw' and 'Typed' event handlers can be found in [WebhookServer.java](https://github.com/CiscoDevNet/odl-sparkbot/blob/master/sparkbot/impl/src/main/java/com/cisco/ctao/sparkbot/core/webhooksvr/WebhookServer.java). The registration methods are:
+```
+    static void registerWebhookHandler(final WebhookEventHandler handler);
+```
+and
+```
+    public static <T> void registerSparkEventHandler(final SparkEventHandler<T> handler);
+```
+Similarly, the unregistration methods are:
+```
+    static void unregisterWebhookHandler(final WebhookEventHandler handler);
+```
+and
+```
+    static <T> void unregisterSparkEventHandler(final SparkEventHandler<T> handler);
+```
