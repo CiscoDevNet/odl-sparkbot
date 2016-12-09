@@ -118,10 +118,11 @@ For more details look in the [spark core package](https://github.com/CiscoDevNet
 ### Sparkbot Event Handlers
 The sparkbot event handler framework supoorts ' Raw' and 'Typed' events. The 'Raw' events are passed onto registered handler as-is when they arrive from Spark. The event handler must then determine the type of the event and the resource for which the event occured and subsequently retrieve the event's resource from Spark. 
 
-Sparkbot 'Raw' event handlers must implement the Spark Event Handling API defined in [WebhookEventHandler.java](https://github.com/CiscoDevNet/odl-sparkbot/blob/master/sparkbot/impl/src/main/java/com/cisco/ctao/sparkbot/core/WebhookEventHandler.java). A handler of Sparkbot 'Raw' events must implement the following method
+Sparkbot 'Raw' event handlers must implement the 'Raw' Event Handling API defined in [WebhookEventHandler.java](https://github.com/CiscoDevNet/odl-sparkbot/blob/master/sparkbot/impl/src/main/java/com/cisco/ctao/sparkbot/core/WebhookEventHandler.java). A handler of Sparkbot 'Raw' events must implement the following method
 ```
     void handleWebhookEvent(WebhookEvent msg, RequestHeaderData requestData);
 ```
+Sparkbot passes to the handler the message received from Spark and data from the HTTP Request header.
 
 The 'Raw' events are processed by the Sparkbot event handler framework into 'Typed' events - i.e. the framework determines the type of the event and the resource for which the event occured, then retrieves the event's resource from Spark and passes it onto the registered event handler. 
 
