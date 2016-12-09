@@ -105,7 +105,15 @@ opendaylight-user@root> log:display |grep HelloWorldApp
 ```
 ## Working with the Sparkbot Code
 ### Client APIs
-The following set of APIs are supported:
+The Spark client APIs are structured as follows:
+```
+<Resource-type-api>.<operation>
+```
+where the API typea correspond to Spark resources, and the operations correspond to the Spark CRUD/L operations on Spark resources. The API type can be one of the `Messages`, `Rooms`, `Teams`, `Memberships`, `TeamMemberships`, and `Webhooks`. Operations can be one of the `list`, `getDetails`, `create`, `update`, or `delete`. 
+
+For example, the code to list all messages in a room is `Messages.listMessages(...)`; the code to get all rooms is `Rooms.listRooms(...)`. Similarly, the code to create a message is `Messages.createMessage(...)`; the code to create a room is `Rooms.createRoom(...)`.
+
+For more details look in the [spark core package](https://github.com/CiscoDevNet/odl-sparkbot/tree/master/sparkbot/impl/src/main/java/com/cisco/ctao/sparkbot/core) for classes defining the Resource-type-apis.
 
 ### Sparkbot Event Handlers
 The Sparkbot framework supports the full set of Cisco Spark webhook events, see https://developer.ciscospark.com/webhooks-explained.html
