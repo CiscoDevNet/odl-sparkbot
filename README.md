@@ -1,8 +1,8 @@
 # Sparkbot
 ## Overview
-Sparkbot is a tool kit to built Java-based Bots for the Spark collaboration platform. It is built on top of the [Spark Java SDK] (https://github.com/ciscospark/spark-java-sdk). SparkBot extends the Spark Java SDK in two ways:
-* It models the SPARK REST operations using a Java , as opposed to accessing them via HTTP requests (as it's done in the the Spark Java SDK). The API models Spark resources, such as messages, rooms, or teams, as Java DTOs and Spark CRUD / List/ GetDetails operations on resources as typed Java interfaces. 
-* It provides an event handler system that allows an app to register for webhook events and to handle webhook events coming from Spark. An application registers a handler for a desired event type, which then gets invoked when the event is received from Spark
+Sparkbot is a tool kit to built Java-based Bots for the Spark collaboration platform. It is built on top of [spark-java-sdk] (https://github.com/ciscospark/spark-java-sdk). SparkBot extends park-java-sdk in two ways:
+* It provides an object-oriented facade to the SPARK REST API, which models Spark resources, such as messages, rooms, or teams, as Java DTOs and Spark CRUD / List/ GetDetails operations on resources as typed Java interfaces. This facade is implemented as a thin layer on top of spark-java-sdk. 
+* It provides an HTTP server with an event handler system that allows an app to register for webhook events and to handle webhook events coming from Spark. An application registers a handler for a desired event type, which then gets invoked when the event is received from Spark. 
 
 The two above component constitute the core of the Sparkbot system, as shown in the following figure:
 
