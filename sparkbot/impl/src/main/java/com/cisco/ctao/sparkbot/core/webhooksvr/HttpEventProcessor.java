@@ -44,19 +44,21 @@ class HttpEventProcessor extends AbstractHandler {
      *
      */
     HttpEventProcessor() {
-        registerWebhookHandler(new LoggingWebHookHandler());
+        registerWebhookHandler(new LoggingWebHookHandler(), null);
     }
 
     /** Register an application webhook 'raw' handler.
-     * @param handler: the handler to be registered
+     * @param handler the handler to be registered
+     * @param filter if specified, create a webhook in Spark with parameters
+     *           as specified in the filter
      */
-    public void registerWebhookHandler(WebhookEventHandler handler) {
-        LOG.info("Registering WebhookHandler {}", handler);
+    public void registerWebhookHandler(WebhookEventHandler handler, WebhookFilter filter) {
+        LOG.info("registerWebhookHandler: handler {}, filter {}", handler, filter);
         webhookHandlers.add(handler);
     }
 
     /** Unregister an application webhook 'raw' handler.
-     * @param handler: the handler to be unregistered
+     * @param handler the handler to be unregistered
      */
     public void unregisterWebhookHandler(WebhookEventHandler handler) {
         LOG.info("Un-registering WebhookHandler {}", handler);
@@ -87,9 +89,9 @@ class HttpEventProcessor extends AbstractHandler {
 
     /** Parses the incoming HTTP request and calls all registered handlers with
      *  the parsed data.
-     * @param baseRequest: the incoming request
-     * @param uri: UIR for the request
-     * @param payload: payload from the request
+     * @param baseRequest the incoming request
+     * @param uri UIR for the request
+     * @param payload payload from the request
      * @return true if ALL OK, return false and use the setErrorResponse routine
      */
     private boolean processHttpMessage(final Request baseRequest, final String uri, final String payload) {
@@ -112,8 +114,8 @@ class HttpEventProcessor extends AbstractHandler {
     }
 
     /** Creates the RequestHeaderData DTO.
-     * @param baseRequest: the webhook request as it came into the HTTP server
-     * @return: the RequestHeaderData DTO that is passed on to registered app handlers
+     * @param baseRequest the webhook request as it came into the HTTP server
+     * @return the RequestHeaderData DTO that is passed on to registered app handlers
      */
     @SuppressWarnings("unchecked")
     private RequestHeaderData getRequestHeaderData(final Request baseRequest) {

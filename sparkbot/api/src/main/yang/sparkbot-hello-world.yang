@@ -12,20 +12,34 @@ module sparkbot-hello-world {
 
     rpc run {
         description
-            "Performs the run of the 'Hello World' application";
+            "Performs the run of the 'Hello World' application. The input
+            parameter contains optional override values of ";
         input {
             leaf access-token {
                 type string;
-                mandatory true;
                 description
                     "Optional access token that overrides the default
-                    access token in the config data store.";
+                    access token in the config data store. If not specified,
+                    authentication will not work if authentication token
+                    is not already specified. ";
             }
             leaf webhook-http-port {
                 type uint32;
                 description
                     "Optional port number that overrides the default port
-                    number for the Sparkbot HTTP server.";
+                    number for the Sparkbot HTTP server. If not specified,
+                    and the HTTP webhook server is not already running,
+                    message events will not processed";
+            }
+            leaf webhook-url-prefix {
+                type string;
+                description
+                    "Optional target URL prefix that overrides the URL prefix
+                    used to create target URLs in webhooks created by default
+                    for each message handler when it's registered. If not
+                    specified, no webhook is created, and if a proper webhook
+                    has not been already created in Spark, message events will
+                    not processed";
             }
         }
     }

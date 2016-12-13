@@ -32,18 +32,20 @@ public class SparkbotApiExamples {
     private static final Logger LOG = LoggerFactory.getLogger(SparkbotApiExamples.class);
     private String originalAccessToken;
     private Long originalHttpPort;
+    private String originalUrlPrefix;
 
     /** This method is the entry point to run the Hello World example.
      * @param accessToken the access token to be used to access Spark
      * @param httpPort http port where to start the webhook server
      */
-    public void run(String accessToken, Long httpPort) {
+    public void run(String accessToken, Long httpPort, String urlPrefix) {
         LOG.info("*** SparkbotApiExamples run started.");
 
         // If specified, override the default access token in the config
         // data store
         overrideDefaultAccessToken(accessToken);
         overrideDefaultHttpPort(httpPort);
+        overrideDefaultUrlPrefix(urlPrefix);
 
         try {
             // Register our example message event handler with Sparkbot
@@ -86,8 +88,9 @@ public class SparkbotApiExamples {
             logTeam("Deleted team...", team);
         } finally {
             // Restore the access token to its original configured value
-            restoreDefaultAccessToken();
+            restoreDefaultUrlPrefix();
             restoreDefaultHttpPort();
+            restoreDefaultAccessToken();
         }
 
         LOG.info("*** SparkbotApiExamples run finished.");
@@ -150,28 +153,62 @@ public class SparkbotApiExamples {
                 overrideHttpPort, this.originalHttpPort);
         if (this.originalHttpPort != null) {
             if (!this.originalHttpPort.equals(overrideHttpPort)) {
-                WebhookServer.getInstance().handleConfigParmsChange(originalHttpPort);
+                WebhookServer.getInstance().handleHttpPortChange(originalHttpPort);
             }
         } else {
             if (overrideHttpPort != null) {
-                WebhookServer.getInstance().handleConfigParmsDelete();
+                WebhookServer.getInstance().handleHttpPortDelete();
             }
         }
         this.originalHttpPort = null;
     }
 
+    private void restoreDefaultUrlPrefix() {
+        String overrideUrlPrefix = WebhookServer.getWebhookUrlPrefix();
+        LOG.info("restoreDefaultUrlPrefix: overrideUrlPrefix {}, originalUrlPrefix {}",
+                overrideUrlPrefix, this.originalUrlPrefix);
+        if (this.originalUrlPrefix != null) {
+            if (!this.originalUrlPrefix.equals(overrideUrlPrefix)) {
+                WebhookServer.getInstance().handleUrlPrefixChange(originalUrlPrefix);
+            }
+        } else {
+            if (overrideUrlPrefix != null) {
+                WebhookServer.getInstance().handleUrlPrefixDelete();
+            }
+        }
+        this.originalUrlPrefix = null;
+    }
+
     private void overrideDefaultHttpPort(Long overrideHttpPort) {
         this.originalHttpPort = WebhookServer.getWebhookServerPort();
-        LOG.info("overrideDefaultHttpPort, overrideHttpPort {}, originalHttpPort {}",
-                overrideHttpPort, this.originalHttpPort);
+        LOG.info("overrideDefaultHttpParams: overrideHttpPort {}, originalHttpPort {} ",
+                overrideHttpPort, this.originalUrlPrefix);
+
         if (overrideHttpPort == null) {
             if (this.originalHttpPort == null) {
-                LOG.error("HTTP Port not specified - webhook handlers will not be called");
+                LOG.error("HTTP Port not specified - webhook handlers may not "
+                        + "be called if there is no existing webhook handler");
             }
         } else {
             // Override the default HTTP port and potentially restart
             // the HTTP server
-            WebhookServer.getInstance().handleConfigParmsChange(overrideHttpPort);
+            WebhookServer.getInstance().handleHttpPortChange(overrideHttpPort);
+        }
+    }
+
+    private void overrideDefaultUrlPrefix(String overrideUrlPrefix) {
+        this.originalUrlPrefix = WebhookServer.getWebhookUrlPrefix();
+        LOG.info("overrideDefaultUrlPrefix: overrideUrlPrefix {}, originalUrlPrefix {}",
+                overrideUrlPrefix, this.originalUrlPrefix);
+
+        if (overrideUrlPrefix == null) {
+            if (this.originalUrlPrefix == null) {
+                LOG.warn("URL Prefix not specified - webhook handlers will not be called if a webhook is "
+                        + "not already specified in Spark");
+            }
+        } else {
+            // Override the default URL Prefix
+            WebhookServer.getInstance().handleUrlPrefixChange(overrideUrlPrefix);
         }
     }
 

@@ -21,9 +21,9 @@ import org.opendaylight.controller.sal.binding.api.RpcProviderRegistry;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.sparkbot.handlers.rev161118.SparkbotHandlersService;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.sparkbot.memberships.rev161110.SparkbotMembershipsService;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.sparkbot.messages.rev161117.SparkbotMesagesService;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.sparkbot.rev150105.SparkBotMasterConfigParms;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.sparkbot.rev150105.SparkBotWebHookParms;
-import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.sparkbot.rev150105.spark.bot.master.config.parms.SparkBotMasterSessionDesc;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.sparkbot.rev150105.SparkbotMasterConfigParms;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.sparkbot.rev150105.SparkbotWebhookParms;
+import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.sparkbot.rev150105.sparkbot.master.config.parms.SparkbotMasterSessionDesc;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.sparkbot.rooms.rev161110.SparkbotRoomsService;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.sparkbot.team.memberships.rev161110.SparkbotTeamMembershipsService;
 import org.opendaylight.yang.gen.v1.urn.opendaylight.params.xml.ns.yang.sparkbot.teams.rev161110.SparkbotTeamsService;
@@ -47,7 +47,7 @@ public class SparkbotProvider {
     private final DataBroker dataBroker;
     private final RpcProviderRegistry rpcProviderRegistry;
 
-    private SparkBotMasterSessionDescChangeHandler sparkBotMasterSessionDescChangeHandler;
+    private SparkbotMasterSessionDescChangeHandler sparkBotMasterSessionDescChangeHandler;
     private SparkBotWebHookParmsChangeHandler sparkBotWebHookParmsChangeHandler;
     private RpcRegistration<SparkbotRoomsService> roomServiceReg;
     private RpcRegistration<SparkbotMesagesService> messageServiceReg;
@@ -71,7 +71,7 @@ public class SparkbotProvider {
      */
     public void init() {
         this.sparkBotMasterSessionDescChangeHandler =
-                new SparkBotMasterSessionDescChangeHandler(dataBroker);
+                new SparkbotMasterSessionDescChangeHandler(dataBroker);
         this.sparkBotWebHookParmsChangeHandler =
                 new SparkBotWebHookParmsChangeHandler(dataBroker);
 
@@ -136,27 +136,27 @@ public class SparkbotProvider {
         LOG.info("SparkBotProvider Closed");
     }
 
-    private class SparkBotMasterSessionDescChangeHandler implements
-            ClusteredDataTreeChangeListener<SparkBotMasterSessionDesc>, AutoCloseable {
+    private class SparkbotMasterSessionDescChangeHandler implements
+            ClusteredDataTreeChangeListener<SparkbotMasterSessionDesc>, AutoCloseable {
 
         private final Logger log =
-                LoggerFactory.getLogger(SparkBotMasterSessionDescChangeHandler.class);
+                LoggerFactory.getLogger(SparkbotMasterSessionDescChangeHandler.class);
 
-        private final InstanceIdentifier<SparkBotMasterSessionDesc> sessionIid =
-                InstanceIdentifier.builder(SparkBotMasterConfigParms.class)
-                        .child(SparkBotMasterSessionDesc.class)
+        private final InstanceIdentifier<SparkbotMasterSessionDesc> sessionIid =
+                InstanceIdentifier.builder(SparkbotMasterConfigParms.class)
+                        .child(SparkbotMasterSessionDesc.class)
                         .build();
-        private ListenerRegistration<SparkBotMasterSessionDescChangeHandler> dcReg;
+        private ListenerRegistration<SparkbotMasterSessionDescChangeHandler> dcReg;
 
-        SparkBotMasterSessionDescChangeHandler(DataBroker dataBroker) {
+        SparkbotMasterSessionDescChangeHandler(DataBroker dataBroker) {
             dcReg = dataBroker.registerDataTreeChangeListener(
                     new DataTreeIdentifier<>(LogicalDatastoreType.CONFIGURATION, sessionIid), this);
         }
 
         // handle changes to the batch timer here, or any other new parameters to the top level
         @Override
-        public void onDataTreeChanged(Collection<DataTreeModification<SparkBotMasterSessionDesc>> changes) {
-            for (DataTreeModification<SparkBotMasterSessionDesc> change : changes) {
+        public void onDataTreeChanged(Collection<DataTreeModification<SparkbotMasterSessionDesc>> changes) {
+            for (DataTreeModification<SparkbotMasterSessionDesc> change : changes) {
                 switch (change.getRootNode().getModificationType()) {
                     case WRITE:
                     case SUBTREE_MODIFIED:
@@ -181,12 +181,12 @@ public class SparkbotProvider {
     }
 
     private class SparkBotWebHookParmsChangeHandler implements
-            ClusteredDataTreeChangeListener<SparkBotWebHookParms>, AutoCloseable {
+            ClusteredDataTreeChangeListener<SparkbotWebhookParms>, AutoCloseable {
 
         private final Logger log = LoggerFactory.getLogger(SparkBotWebHookParmsChangeHandler.class);
 
-        private final InstanceIdentifier<SparkBotWebHookParms> sessionIid =
-                InstanceIdentifier.builder(SparkBotWebHookParms.class)
+        private final InstanceIdentifier<SparkbotWebhookParms> sessionIid =
+                InstanceIdentifier.builder(SparkbotWebhookParms.class)
                         .build();
         private ListenerRegistration<SparkBotWebHookParmsChangeHandler> dcReg;
 
@@ -197,16 +197,17 @@ public class SparkbotProvider {
 
         // handle changes to the batch timer here, or any other new parameters to the top level
         @Override
-        public void onDataTreeChanged(final Collection<DataTreeModification<SparkBotWebHookParms>> changes) {
-            for (DataTreeModification<SparkBotWebHookParms> change : changes) {
+        public void onDataTreeChanged(final Collection<DataTreeModification<SparkbotWebhookParms>> changes) {
+            for (DataTreeModification<SparkbotWebhookParms> change : changes) {
                 switch (change.getRootNode().getModificationType()) {
                     case WRITE:
                     case SUBTREE_MODIFIED:
-                        WebhookServer.getInstance().handleConfigParmsChange(
-                                change.getRootNode().getDataAfter().getWebHookHttpPort());
+                        SparkbotWebhookParms dataAfter = change.getRootNode().getDataAfter();
+                        WebhookServer.getInstance().handleHttpPortChange(dataAfter.getWebhookHttpPort());
+                        WebhookServer.getInstance().handleUrlPrefixChange(dataAfter.getWebhookUrlPrefix());
                         break;
                     case DELETE:
-                        WebhookServer.getInstance().handleConfigParmsDelete();
+                        WebhookServer.getInstance().handleHttpPortDelete();
                         break;
                     default:
                         log.error("SparkBotWebHookParmsChangeHandler: "

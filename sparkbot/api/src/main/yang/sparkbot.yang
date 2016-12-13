@@ -14,9 +14,9 @@ module sparkbot {
         description "Initial revision of sparkbot model";
     }
 
-    container spark-bot-master-config-parms {
+    container sparkbot-master-config-parms {
 
-        list spark-bot-master-session-desc {
+        list sparkbot-master-session-desc {
             key spark-email-address;
             leaf spark-email-address {
                 type string;
@@ -27,12 +27,18 @@ module sparkbot {
         }
     }
 
-    container spark-bot-web-hook-parms {
-        leaf web-hook-http-port {
+    container sparkbot-webhook-parms {
+        leaf webhook-http-port {
             type uint32;
             description
                 "An HTTP server will be started on this port once
                 configured, delete the config to stop server";
+        }
+        leaf webhook-url-prefix {
+            type string;
+            description
+                "The URL prefix to be used in webhook registrations with
+                Spark.";
         }
     }
 }

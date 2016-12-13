@@ -61,15 +61,11 @@ public class SparkbotAppProvider implements SparkbotHelloWorldService {
     @Override
     public Future<RpcResult<Void>> run(RunInput input) {
         if (input != null) {
-            Long httpPort = input.getWebhookHttpPort();
-            if (httpPort != null) {
-                sparkbotApiExamples.run(input.getAccessToken(), httpPort);
-            } else {
-                sparkbotApiExamples.run(input.getAccessToken(), null);
-            }
+            sparkbotApiExamples.run(input.getAccessToken(), input.getWebhookHttpPort(),
+                    input.getWebhookUrlPrefix());
         } else {
-            LOG.info("access token not specified");
-            sparkbotApiExamples.run(null, null);
+            LOG.info("run: accessToken, httpPort and urlPrefix not specified");
+            sparkbotApiExamples.run(null, null, null);
         }
         return Futures.immediateFuture( RpcResultBuilder.<Void>success().build() );
     }
