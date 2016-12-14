@@ -19,12 +19,11 @@ import java.util.Enumeration;
 import java.util.List;
 
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.IOUtils;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,18 +31,16 @@ import org.slf4j.LoggerFactory;
  * @author johnburn, jmedved
  *
  */
-class HttpEventProcessor extends AbstractHandler {
-    private static final Logger LOG = LoggerFactory.getLogger(HttpEventProcessor.class);
-    private final List<WebhookEventHandler> webhookHandlers = Collections.synchronizedList(new ArrayList<>());
-    private final Gson gson = new Gson();
-
-    private String response;
-    private int httpRSC;
+class SparkServlet extends HttpServlet {
+    private static final long serialVersionUID = 5221908472085737227L;
+    private static final Logger LOG = LoggerFactory.getLogger(SparkServlet.class);
+    private final transient List<WebhookEventHandler> webhookHandlers = Collections.synchronizedList(new ArrayList<>());
+    private final transient Gson gson = new Gson();
 
     /** Constructor - registers a "default" logging webhook handler.
      *
      */
-    HttpEventProcessor() {
+    SparkServlet() {
         registerWebhookHandler(new LoggingWebHookHandler(), null);
     }
 
@@ -65,37 +62,69 @@ class HttpEventProcessor extends AbstractHandler {
         webhookHandlers.remove(handler);
     }
 
-    @Override
-    public void handle(String target, Request baseRequest,
-                       HttpServletRequest httpRequest,
-                       HttpServletResponse httpResponse) throws IOException, ServletException {
-        response = null;
-        httpRSC = HttpServletResponse.SC_OK;
-        final String method = baseRequest.getMethod().toLowerCase();
-        final String uri = baseRequest.getRequestURI().trim();
-        final String payload = IOUtils.toString(baseRequest.getInputStream()).trim();
-
-        LOG.debug(">>>> handle: received http message: start");
-        LOG.debug("Method: {}, URI: '{}', RemoteAddr: {}", method, uri, baseRequest.getRemoteAddr());
-
-        if (method.compareToIgnoreCase("POST") == 0 || method.compareToIgnoreCase("PUT") == 0) {
-            processHttpMessage(baseRequest, uri, payload);
+    private void methodNotAllowed(HttpServletRequest request, HttpServletResponse response) {
+        try {
+            response.setContentType("text/html");
+            response.getWriter().println("<h1>Method '" + request.getMethod() + "' not supported. </h1>");
+            response.getWriter().println("session=" + request.getSession(true).getId());
+            response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+        } catch (IOException e) {
+            LOG.error("doGet: Could not create a response, request {}", request, e);;
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
+    }
 
-        sendHttpResponse(httpResponse);
-        baseRequest.setHandled(true);
-        LOG.debug("<<<< handle: received http message: end");
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        methodNotAllowed(request, response);
+    }
+
+    @Override
+    protected void doDelete(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        methodNotAllowed(request, response);
+    }
+
+    @Override
+    protected void doPut(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        methodNotAllowed(request, response);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        LOG.info("doPost: request {}", request);
+
+        final String method = request.getMethod();
+        final String uri = request.getRequestURI().trim();
+        try {
+            if (method.compareToIgnoreCase("POST") == 0 || method.compareToIgnoreCase("PUT") == 0) {
+                final String payload = IOUtils.toString(request.getInputStream()).trim();
+                processHttpMessage(request, uri, payload);
+                response.setStatus(HttpServletResponse.SC_OK);
+            } else {
+                response.setContentType("text/html");
+                response.getWriter().println("<h1> Method '" + method + "' not allowed. </h1>");
+                response.getWriter().println("session=" + request.getSession(true).getId());
+                response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+            }
+        } catch (IOException e) {
+            LOG.error("doGet: Could not create a response, request {}", request, e);
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
     }
 
     /** Parses the incoming HTTP request and calls all registered handlers with
      *  the parsed data.
-     * @param baseRequest the incoming request
+     * @param request the incoming request
      * @param uri UIR for the request
      * @param payload payload from the request
      * @return true if ALL OK, return false and use the setErrorResponse routine
      */
-    private boolean processHttpMessage(final Request baseRequest, final String uri, final String payload) {
-        final RequestHeaderData headers = getRequestHeaderData(baseRequest);
+    private boolean processHttpMessage(final HttpServletRequest request, final String uri, final String payload) {
+        final RequestHeaderData headers = getRequestHeaderData(request);
         LOG.debug("payload: {}, uri {}", payload, uri);
 
         try {
@@ -107,22 +136,20 @@ class HttpEventProcessor extends AbstractHandler {
             }
         } catch (JsonSyntaxException e) {
             LOG.error("processHttpMessage: Invalid json syntax, exception {}", e);
-            setErrorResponse(400, "Invalid JSON syntax");
             return false;
         }
         return true;
     }
 
     /** Creates the RequestHeaderData DTO.
-     * @param baseRequest the webhook request as it came into the HTTP server
+     * @param request the webhook request as it came into the HTTP server
      * @return the RequestHeaderData DTO that is passed on to registered app handlers
      */
-    @SuppressWarnings("unchecked")
-    private RequestHeaderData getRequestHeaderData(final Request baseRequest) {
+    private RequestHeaderData getRequestHeaderData(final HttpServletRequest request) {
         final RequestHeaderDataBuilder rdb = new RequestHeaderDataBuilder();
-        for (Enumeration<String> e = baseRequest.getHeaderNames(); e.hasMoreElements(); ) {
+        for (Enumeration<String> e = request.getHeaderNames(); e.hasMoreElements(); ) {
             String header = e.nextElement();
-            String value = baseRequest.getHeader(header);
+            String value = request.getHeader(header);
             LOG.debug("Header: {}, Value: {}", header, value);
             switch (header) {
                 case "x-scheduler-task-id":
@@ -158,21 +185,6 @@ class HttpEventProcessor extends AbstractHandler {
             }
         }
         return rdb.build();
-    }
-
-    private void sendHttpResponse(final HttpServletResponse httpResponse) throws IOException {
-        if (response != null) {
-            httpResponse.setStatus(httpRSC);
-            httpResponse.getWriter().println(response);
-        } else {
-            httpResponse.setStatus(httpRSC);
-        }
-        httpResponse.setContentType("text/json;charset=utf-8");
-    }
-
-    private void setErrorResponse(final int rsc, final String content) {
-        httpRSC = rsc;
-        response = "{\"error\":\"" + content + "\"}";
     }
 
     /** WebHookHandler that logs all incoming requests. Registered by default

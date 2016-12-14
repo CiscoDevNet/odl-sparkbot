@@ -25,6 +25,8 @@ import java.net.URISyntaxException;
 import java.util.List;
 
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +38,7 @@ public final class WebhookServer {
     private static final Logger LOG = LoggerFactory.getLogger(WebhookServer.class);
     private static final String EVT_HANDLER_METHOD_NAME = "handleSparkEvent";
 
-    private final HttpEventProcessor httpHandler = new HttpEventProcessor();
+    private final SparkServlet sparkServlet = new SparkServlet();
     private final SparkEventProcessor<Message> msgEventProcessor =
             new SparkEventProcessor<>(Messages.api(), "messages");
     private final SparkEventProcessor<Room> roomEventProcessor =
@@ -89,14 +91,14 @@ public final class WebhookServer {
      *           as specified in the filter
      */
     public static void registerWebhookHandler(final WebhookEventHandler handler, final WebhookFilter filter) {
-        getInstance().httpHandler.registerWebhookHandler(handler, filter);
+        getInstance().sparkServlet.registerWebhookHandler(handler, filter);
     }
 
     /** Unregisters a 'raw' webhook handler.
      * @param handler: the handler to be registered
      */
     public static void unregisterWebhookHandler(final WebhookEventHandler handler) {
-        getInstance().httpHandler.unregisterWebhookHandler(handler);
+        getInstance().sparkServlet.unregisterWebhookHandler(handler);
     }
 
     /** Register a handler to process Spark webhook events.
@@ -283,7 +285,16 @@ public final class WebhookServer {
 
         this.httpPort = port;
         this.httpServer = new Server(port);
-        this.httpServer.setHandler(httpHandler);
+
+        ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+        context.setContextPath("/");
+        httpServer.setHandler(context);
+
+        context.addServlet(new ServletHolder(sparkServlet),"/*");
+        context.addServlet(new ServletHolder(new HelloServlet("Buongiorno Mondo")),"/it/*");
+        context.addServlet(new ServletHolder(new HelloServlet("Bonjour le Monde")),"/fr/*");
+        context.addServlet(new ServletHolder(new HelloServlet("Guten Morgen Welt")),"/de");
+
         try {
             this.httpServer.start();
         } catch (Exception e) {
