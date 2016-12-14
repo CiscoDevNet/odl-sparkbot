@@ -1,8 +1,8 @@
 # Sparkbot
 ## Overview
-Sparkbot is a tool kit to built Java-based Bots for the Spark collaboration platform. It is built on top of the [Spark Java SDK] (https://github.com/ciscospark/spark-java-sdk). SparkBot extends the Spark Java SDK in two ways:
-* It models the SPARK REST operations using a Java , as opposed to accessing them via HTTP requests (as it's done in the the Spark Java SDK). The API models Spark resources, such as messages, rooms, or teams, as Java DTOs and Spark CRUD / List/ GetDetails operations on resources as typed Java interfaces. 
-* It provides an event handler system that allows an app to register for webhook events and to handle webhook events coming from Spark. An application registers a handler for a desired event type, which then gets invoked when the event is received from Spark
+Sparkbot is a tool kit to built Java-based Bots for the Spark collaboration platform. It is built on top of [spark-java-sdk] (https://github.com/ciscospark/spark-java-sdk). SparkBot extends park-java-sdk in two ways:
+* It provides an object-oriented facade to the SPARK REST API, which models Spark resources, such as messages, rooms, or teams, as Java DTOs and Spark CRUD / List/ GetDetails operations on resources as typed Java interfaces. This facade is implemented as a thin layer on top of spark-java-sdk. 
+* It provides an HTTP server with an event handler system that allows an app to register for webhook events and to handle webhook events coming from Spark. An application registers a handler for a desired event type, which then gets invoked when the event is received from Spark. 
 
 The two above component constitute the core of the Sparkbot system, as shown in the following figure:
 
@@ -105,9 +105,47 @@ opendaylight-user@root> log:display |grep HelloWorldApp
 ```
 ## Working with the Sparkbot Code
 ### Client APIs
-The following set of APIs are supported:
+The Spark client APIs are structured as follows:
+```
+<Resource-type-api>.<operation>
+```
+where the API typea correspond to Spark resources, and the operations correspond to the Spark CRUD/L operations on Spark resources. The API type can be one of the `Messages`, `Rooms`, `Teams`, `Memberships`, `TeamMemberships`, and `Webhooks`. Operations can be one of the `list`, `getDetails`, `create`, `update`, or `delete`. 
+
+For example, the code to list all messages in a room is `Messages.listMessages(...)`; the code to get all rooms is `Rooms.listRooms(...)`. Similarly, the code to create a message is `Messages.createMessage(...)`; the code to create a room is `Rooms.createRoom(...)`.
+
+For more details look in the [spark core package](https://github.com/CiscoDevNet/odl-sparkbot/tree/master/sparkbot/impl/src/main/java/com/cisco/ctao/sparkbot/core) folder for classes defining the resource-type-apis. Examples of client API usage are in [SparkbotApiExamples.java](https://github.com/CiscoDevNet/odl-sparkbot/blob/master/sparkbot/app/src/main/java/com/cisco/ctao/sparkbot/application/SparkbotApiExamples.java).
 
 ### Sparkbot Event Handlers
-The Sparkbot framework supports the full set of Cisco Spark webhook events, see https://developer.ciscospark.com/webhooks-explained.html
+The sparkbot event handler framework supoorts ' Raw' and 'Typed' events. The 'Raw' events are passed onto registered handler as-is when they arrive from Spark. The event handler must then determine the type of the event and the resource for which the event occured and subsequently retrieve the event's resource from Spark. 
 
-Register/Unregister Handlers
+Sparkbot 'Raw' event handlers must implement the 'Raw' Event Handling API defined in [WebhookEventHandler.java](https://github.com/CiscoDevNet/odl-sparkbot/blob/master/sparkbot/impl/src/main/java/com/cisco/ctao/sparkbot/core/WebhookEventHandler.java). A handler of Sparkbot 'Raw' events must implement the following method
+```
+    void handleWebhookEvent(WebhookEvent msg, RequestHeaderData requestData);
+```
+Sparkbot passes to the handler the message received from Spark and data from the HTTP Request header.
+
+The 'Raw' events are processed by the Sparkbot event handler framework into 'Typed' events - i.e. the framework determines the type of the event and the resource for which the event occured, then retrieves the event's resource from Spark and passes it onto the registered event handler. 
+
+Sparkbot 'Typed' event handlers must implement the Spark Event Handling API defined in [SparkEventHandler.java](https://github.com/CiscoDevNet/odl-sparkbot/blob/master/sparkbot/impl/src/main/java/com/cisco/ctao/sparkbot/core/SparkEventHandler.java). A handler of Sparkbot 'Typed' events must implement the following method
+```
+    void handleSparkEvent(String elementId, T element, EventType eventType);
+```
+for the desired element type `<T>`. Messages, Rooms, and Memberships are the supported element types in Spark webhooks and they are all supported by the Sparkbot framework. For more details see https://developer.ciscospark.com/webhooks-explained.html.
+
+#### Registering/Unregistering Event Handlers
+The handler registration API for both 'Raw' and 'Typed' event handlers can be found in [WebhookServer.java](https://github.com/CiscoDevNet/odl-sparkbot/blob/master/sparkbot/impl/src/main/java/com/cisco/ctao/sparkbot/core/webhooksvr/WebhookServer.java). The registration methods are:
+```
+    static void registerWebhookHandler(final WebhookEventHandler handler);
+```
+and
+```
+    public static <T> void registerSparkEventHandler(final SparkEventHandler<T> handler);
+```
+Similarly, the unregistration methods are:
+```
+    static void unregisterWebhookHandler(final WebhookEventHandler handler);
+```
+and
+```
+    static <T> void unregisterSparkEventHandler(final SparkEventHandler<T> handler);
+```
