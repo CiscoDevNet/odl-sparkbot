@@ -7,7 +7,7 @@
  */
 package com.cisco.ctao.sparkbot.core.testhandlers;
 
-import com.cisco.ctao.sparkbot.core.SparkEventHandler;
+import com.cisco.ctao.sparkbot.core.TypedEventHandler;
 import com.ciscospark.Room;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class WebhookRoomTestHandler implements SparkEventHandler<Room> {
+public class WebhookRoomTestHandler implements TypedEventHandler<Room> {
     private static final Logger LOG = LoggerFactory.getLogger(WebhookRoomTestHandler.class);
     private final AtomicInteger eventCounter = new AtomicInteger();
 

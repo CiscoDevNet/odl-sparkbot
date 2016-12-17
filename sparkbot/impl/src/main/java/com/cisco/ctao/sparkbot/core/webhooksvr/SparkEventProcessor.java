@@ -8,9 +8,9 @@
 package com.cisco.ctao.sparkbot.core.webhooksvr;
 
 import com.cisco.ctao.sparkbot.core.SparkApi;
-import com.cisco.ctao.sparkbot.core.SparkEventHandler;
-import com.cisco.ctao.sparkbot.core.SparkEventHandler.EventType;
-import com.cisco.ctao.sparkbot.core.WebhookEventHandler;
+import com.cisco.ctao.sparkbot.core.TypedEventHandler;
+import com.cisco.ctao.sparkbot.core.TypedEventHandler.EventType;
+import com.cisco.ctao.sparkbot.core.RawEventHandler;
 import com.ciscospark.SparkException;
 
 import java.util.ArrayList;
@@ -20,11 +20,11 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SparkEventProcessor<T> implements WebhookEventHandler {
+public class SparkEventProcessor<T> implements RawEventHandler {
     private static final Logger LOG = LoggerFactory.getLogger(SparkEventProcessor.class);
     private final SparkApi<T> sparkApi;
     private final String resource;
-    private final List<SparkEventHandler<T>> handlers =
+    private final List<TypedEventHandler<T>> handlers =
             Collections.synchronizedList(new ArrayList<>());
 
     private void handleCreatedUpdatedEvent(final String elementId, EventType eventType) {
@@ -39,7 +39,7 @@ public class SparkEventProcessor<T> implements WebhookEventHandler {
                 element = null;
                 LOG.error("handleCreatedUpdatedEvent: Can't retrieve element {}, exception:", elementId, e);
             }
-            for (SparkEventHandler<T> handler : handlers) {
+            for (TypedEventHandler<T> handler : handlers) {
                 handler.handleSparkEvent(elementId, element, eventType);
             }
 
@@ -49,7 +49,7 @@ public class SparkEventProcessor<T> implements WebhookEventHandler {
     private void handleDeletedEvent(final String elementId) {
         LOG.debug("{}: handleDeletedEvent id {}, resource '{}', registered handlers {}",
                 this.getClass().getName(), elementId, resource, handlers.size());
-        for (SparkEventHandler<T> handler : handlers) {
+        for (TypedEventHandler<T> handler : handlers) {
             handler.handleSparkEvent(elementId, null, EventType.DELETED);
         }
     }
@@ -86,7 +86,7 @@ public class SparkEventProcessor<T> implements WebhookEventHandler {
      * @param handler: the handler to be registered
      * @return the number of registered handlers *before* this registration
      */
-    public int registerHandler(final SparkEventHandler<T> handler) {
+    public int registerHandler(final TypedEventHandler<T> handler) {
         LOG.info("Registering handler {}", handler.getClass().getName());
         final int size = handlers.size();
         handlers.add(handler);
@@ -97,7 +97,7 @@ public class SparkEventProcessor<T> implements WebhookEventHandler {
      * @param handler: the handler to be unregistered
      * @return the number of registered handlers *after* this registration
      */
-    public int unregisterHandler(final SparkEventHandler<T> handler) {
+    public int unregisterHandler(final TypedEventHandler<T> handler) {
         LOG.info("Unregistering handler {}", handler.getClass().getName());
         handlers.remove(handler);
         return handlers.size();

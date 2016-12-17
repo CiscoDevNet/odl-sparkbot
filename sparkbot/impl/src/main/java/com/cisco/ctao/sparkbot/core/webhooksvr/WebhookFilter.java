@@ -13,7 +13,7 @@ public class WebhookFilter {
     private final Resources resource;
     private final String filter;
     private final String secret;
-    private final String path;
+    private final String name;
 
     public enum Resources {
         MESSAGES(0), ROOMS(1), MEMBERSHIPS(2), ALL(3);
@@ -46,12 +46,12 @@ public class WebhookFilter {
     }
 
 
-    public WebhookFilter(Events event, Resources resource, String filter, String secret, String path) {
+    public WebhookFilter(Events event, Resources resource, String filter, String secret, String name) {
         this.event = event;
         this.resource = resource;
         this.filter = filter;
         this.secret = secret;
-        this.path = path;
+        this.name = name;
     }
 
     public String getEvent() {
@@ -74,7 +74,13 @@ public class WebhookFilter {
     }
 
 
-    public String getPath() {
-        return path;
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public String toString() {
+        return "WebhookFilter [event=" + event + ", resource=" + resource + ", filter=" + filter + ", secret=" + secret
+                + ", name=" + name + "]";
     }
 }

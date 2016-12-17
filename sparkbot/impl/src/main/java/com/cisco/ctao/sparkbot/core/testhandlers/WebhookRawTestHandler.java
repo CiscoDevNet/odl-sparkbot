@@ -7,7 +7,7 @@
  */
 package com.cisco.ctao.sparkbot.core.testhandlers;
 
-import com.cisco.ctao.sparkbot.core.WebhookEventHandler;
+import com.cisco.ctao.sparkbot.core.RawEventHandler;
 import com.cisco.ctao.sparkbot.core.webhooksvr.RequestHeaderData;
 import com.cisco.ctao.sparkbot.core.webhooksvr.WebhookEvent;
 import com.cisco.ctao.sparkbot.core.webhooksvr.WebhookEventData;
@@ -15,8 +15,12 @@ import com.cisco.ctao.sparkbot.core.webhooksvr.WebhookEventData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class WebhookTestHandler implements WebhookEventHandler {
-    private static final Logger LOG = LoggerFactory.getLogger(WebhookTestHandler.class);
+public class WebhookRawTestHandler implements RawEventHandler {
+    private static final Logger LOG = LoggerFactory.getLogger(WebhookRawTestHandler.class);
+
+    public WebhookRawTestHandler() {
+        LOG.info("WebhookRawTestHandler created");
+    }
 
     @Override
     public void handleWebhookEvent(final WebhookEvent msg, final RequestHeaderData requestData) {

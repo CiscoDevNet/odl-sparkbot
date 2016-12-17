@@ -9,9 +9,9 @@ package com.cisco.ctao.sparkbot.core.webhooksvr;
 
 import com.cisco.ctao.sparkbot.core.Memberships;
 import com.cisco.ctao.sparkbot.core.Messages;
+import com.cisco.ctao.sparkbot.core.RawEventHandler;
 import com.cisco.ctao.sparkbot.core.Rooms;
-import com.cisco.ctao.sparkbot.core.SparkEventHandler;
-import com.cisco.ctao.sparkbot.core.WebhookEventHandler;
+import com.cisco.ctao.sparkbot.core.TypedEventHandler;
 import com.cisco.ctao.sparkbot.core.Webhooks;
 import com.ciscospark.Membership;
 import com.ciscospark.Message;
@@ -22,7 +22,12 @@ import com.ciscospark.Webhook;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -37,8 +42,11 @@ import org.slf4j.LoggerFactory;
 public final class WebhookServer {
     private static final Logger LOG = LoggerFactory.getLogger(WebhookServer.class);
     private static final String EVT_HANDLER_METHOD_NAME = "handleSparkEvent";
+    private static final Map<String, RawEventHandlerReg> REGISTRATIONS = new HashMap<>();
 
-    private final SparkServlet sparkServlet = new SparkServlet();
+    private static WebhookServer instance;
+
+    private final SparkServlet sparkServlet = new SparkServlet("Default");
     private final SparkEventProcessor<Message> msgEventProcessor =
             new SparkEventProcessor<>(Messages.api(), "messages");
     private final SparkEventProcessor<Room> roomEventProcessor =
@@ -49,7 +57,7 @@ public final class WebhookServer {
     private Server httpServer;
     private Integer httpPort;
     private URI urlPrefix;
-    private static WebhookServer instance;
+    private ServletContextHandler context;
 
     private WebhookServer() {
         httpServer = null;
@@ -81,23 +89,75 @@ public final class WebhookServer {
     /** Registers a 'raw' webhook handler.
      * @param handler the handler to be registered
      */
-    public static void registerWebhookHandler(final WebhookEventHandler handler) {
-        registerWebhookHandler(handler, null);
+    public static void registerWebhookHandler(final RawEventHandler handler) {
+        registerRawEventHandler(handler, null);
     }
 
-    /** Registers a 'raw' webhook handler.
+    /** Registers a 'raw' webhook handler. IF a filter is specified,
+     *  the registration creates a separate servlet and a webhook is Spark.
+     *  The webhook's 'event' and 'resource' parameters are set to the
+     *  values specified in the filter.
      * @param handler the handler to be registered
      * @param filter if specified, create a webhook in Spark with parameters
-     *           as specified in the filter
+     *           as specified in the filter. The filter specifies webhook
+     *           parameters and a path in the local server that will be used
+     *           for this handler only (in the handler's servlet).
      */
-    public static void registerWebhookHandler(final WebhookEventHandler handler, final WebhookFilter filter) {
-        getInstance().sparkServlet.registerWebhookHandler(handler, filter);
+    public static void registerRawEventHandler(final RawEventHandler handler, final WebhookFilter filter) {
+        LOG.info("registerRawEventHandler: handler {}, filter {}", handler, filter);
+        if (filter != null) {
+            // Create a new servlet for the handler
+            if (REGISTRATIONS.get(filter.getName()) == null) {
+                SparkServlet servlet = null;
+                Webhook webhook = null;
+                ServletHolder sh;
+                try {
+                    final URI webhookUrl = new URI(getWebhookUrlPrefix() + "/" + filter.getName());
+                    LOG.info("webhookUrl {}", webhookUrl);
+                    String webhookId;
+                    try {
+                        webhook = Webhooks.createWebhook(filter.getName(), webhookUrl,
+                                filter.getResource(), filter.getEvent(), filter.getFilter(), filter.getSecret());
+                        LOG.info("registerRawEventHandler: webhook created {}", webhook);
+                        webhookId = webhook.getId();
+                    } catch (Exception e) {
+                        LOG.error("registerRawEventHandler: Failed to create webhook", e);
+                        webhookId = null;
+                    }
+                    servlet = new SparkServlet(filter.getName());
+                    servlet.registerWebhookHandler(handler);
+                    sh = new ServletHolder(servlet);
+                    getInstance().context.addServlet(sh, "/" + filter.getName());
+                    sh.start();
+                    REGISTRATIONS.put(filter.getName(), new RawEventHandlerReg(webhookId, handler, filter));
+                    LOG.info("REGISTRATIONS {}", REGISTRATIONS);
+                } catch (URISyntaxException e) {
+                    LOG.error("registerWebhookHandler: failed to register handler '{}'", filter.getName(), e);
+                } catch (Exception e) {
+                    LOG.error("registerWebhookHandler: Erro starting servlet '{}'", filter.getName(), e);
+                    if (servlet != null) {
+                        servlet.unregisterWebhookHandler(handler);
+                    }
+                    if (webhook != null) {
+                        Webhooks.deleteWebhook(webhook.getId());
+                    }
+                    // sh.stop();
+                    // servlet.destroy();
+                    REGISTRATIONS.remove(filter.getName());
+                }
+            } else {
+                LOG.error("Handler '{}' already registered", filter.getName());
+            }
+        } else {
+            // Register the handler with the default servlet
+            getInstance().sparkServlet.registerWebhookHandler(handler);
+        }
     }
 
     /** Unregisters a 'raw' webhook handler.
      * @param handler: the handler to be registered
      */
-    public static void unregisterWebhookHandler(final WebhookEventHandler handler) {
+    public static void unregisterRawEventHandler(final RawEventHandler handler) {
         getInstance().sparkServlet.unregisterWebhookHandler(handler);
     }
 
@@ -105,7 +165,7 @@ public final class WebhookServer {
      * @param handler reference to the handler to be registered. A handler
      *          can be parameterized to a Message, Room, or Membership.
      */
-    public static <T> void registerSparkEventHandler(final SparkEventHandler<T> handler) {
+    public static <T> void registerSparkEventHandler(final TypedEventHandler<T> handler) {
         registerSparkEventHandler(handler, null);
     }
 
@@ -116,22 +176,23 @@ public final class WebhookServer {
      *           as specified in the filter
      */
     @SuppressWarnings("unchecked")
-    public static <T> void registerSparkEventHandler(final SparkEventHandler<T> handler, final WebhookFilter filter) {
+    public static <T> void registerSparkEventHandler(final TypedEventHandler<T> handler,
+            final WebhookFilter filter) {
         Class<?> clazz = findEventHandlerClass(handler);
         if (clazz != null) {
             if (Message.class.isAssignableFrom(clazz)) {
                 SparkEventProcessor<Message> evtProc = getInstance().msgEventProcessor;
-                if (evtProc.registerHandler((SparkEventHandler<Message>) handler) == 0) {
+                if (evtProc.registerHandler((TypedEventHandler<Message>) handler) == 0) {
                     registerWebhookHandler(evtProc);
                 }
             } else if (Room.class.isAssignableFrom(clazz)) {
                 SparkEventProcessor<Room> evtProc = getInstance().roomEventProcessor;
-                if (evtProc.registerHandler((SparkEventHandler<Room>) handler) == 0) {
+                if (evtProc.registerHandler((TypedEventHandler<Room>) handler) == 0) {
                     registerWebhookHandler(evtProc);
                 }
             } else if (Membership.class.isAssignableFrom(clazz)) {
                 SparkEventProcessor<Membership> evtProc = getInstance().membershipEventProcessor;
-                if (evtProc.registerHandler((SparkEventHandler<Membership>) handler) == 0) {
+                if (evtProc.registerHandler((TypedEventHandler<Membership>) handler) == 0) {
                     registerWebhookHandler(evtProc);
                 }
             } else {
@@ -144,23 +205,23 @@ public final class WebhookServer {
      * @param handler reference to the handler to be unregistered.
      */
     @SuppressWarnings("unchecked")
-    public static <T> void unregisterSparkEventHandler(final SparkEventHandler<T> handler) {
+    public static <T> void unregisterSparkEventHandler(final TypedEventHandler<T> handler) {
         Class<?> clazz = findEventHandlerClass(handler);
         if (clazz != null) {
             if (Message.class.isAssignableFrom(clazz)) {
                 SparkEventProcessor<Message> evtProc = getInstance().msgEventProcessor;
-                if (evtProc.unregisterHandler((SparkEventHandler<Message>) handler) == 0) {
-                    unregisterWebhookHandler(evtProc);
+                if (evtProc.unregisterHandler((TypedEventHandler<Message>) handler) == 0) {
+                    unregisterRawEventHandler(evtProc);
                 }
             } else if (Room.class.isAssignableFrom(clazz)) {
                 SparkEventProcessor<Room> evtProc = getInstance().roomEventProcessor;
-                if (evtProc.unregisterHandler((SparkEventHandler<Room>) handler) == 0) {
-                    unregisterWebhookHandler(evtProc);
+                if (evtProc.unregisterHandler((TypedEventHandler<Room>) handler) == 0) {
+                    unregisterRawEventHandler(evtProc);
                 }
             } else if (Membership.class.isAssignableFrom(clazz)) {
                 SparkEventProcessor<Membership> evtProc = getInstance().membershipEventProcessor;
-                if (evtProc.unregisterHandler((SparkEventHandler<Membership>) handler) == 0) {
-                    unregisterWebhookHandler(evtProc);
+                if (evtProc.unregisterHandler((TypedEventHandler<Membership>) handler) == 0) {
+                    unregisterRawEventHandler(evtProc);
                 }
             } else {
                 LOG.error("Invalid event handler object, sparkEventHandler method {}", clazz.getName());
@@ -172,7 +233,7 @@ public final class WebhookServer {
      * @param port the port on which to listen to requests
      */
     public void handleHttpPortChange(final Long port) {
-        LOG.info("handleHttpPortChange: port {}", port);
+        LOG.info("handleHttpPortChange: port {}, httpPort {}", port, httpPort);
         if (port != null) {
             Integer tmpPort = port.intValue();
             if ((httpPort != null && (!httpPort.equals(tmpPort))) || (httpPort == null)) {
@@ -229,7 +290,7 @@ public final class WebhookServer {
      * @param handler reference to a handler from which to get the class
      * @return the class for which the handler has been instantiated
      */
-    private static <T> Class<?> findEventHandlerClass(final SparkEventHandler<T> handler) {
+    private static <T> Class<?> findEventHandlerClass(final TypedEventHandler<T> handler) {
         for (Method m : handler.getClass().getMethods()) {
             if (EVT_HANDLER_METHOD_NAME.equals(m.getName())) {
                 Class<?>[] handlerParams = m.getParameterTypes();
@@ -278,6 +339,7 @@ public final class WebhookServer {
     }
 
     private void startHttpServer(final Integer port) {
+        LOG.info("startHttpServer {}", port);
         if (port < 1 && port > 65535) {
             LOG.error("SparkViewBotWebHook: http port out of range: {}", port);
             return;
@@ -286,22 +348,54 @@ public final class WebhookServer {
         this.httpPort = port;
         this.httpServer = new Server(port);
 
-        ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-        context.setContextPath("/");
-        httpServer.setHandler(context);
-
-        context.addServlet(new ServletHolder(sparkServlet),"/*");
-        context.addServlet(new ServletHolder(new HelloServlet("Buongiorno Mondo")),"/it/*");
-        context.addServlet(new ServletHolder(new HelloServlet("Bonjour le Monde")),"/fr/*");
-        context.addServlet(new ServletHolder(new HelloServlet("Guten Morgen Welt")),"/de");
+        syncSparkbots();
 
         try {
             this.httpServer.start();
         } catch (Exception e) {
-            LOG.error("Failed to start the webhook HTTP server, Exception: {}", e.toString());
+            LOG.error("startHttpServer: failed to start the server, ", e);
             this.httpServer = null;
             this.httpPort = null;
             return;
+        }
+        ServletHolder sh = new ServletHolder(new HelloServlet("What a World"));
+        context.addServlet(sh,"/wow");
+        try {
+            sh.start();
+        } catch (Exception e) {
+            LOG.error("startHttpServer: failed to dynamically start the wow servlet, ", e);
+        }
+    }
+
+    private void syncSparkbots() {
+        LOG.info("syncSparkbots");
+
+        // Delete all existing webhooks from Spark
+        try {
+            for (Webhook wh : Webhooks.listWebhooks(null)) {
+                Webhooks.deleteWebhook(wh.getId());
+            }
+        } catch (SparkException e) {
+            LOG.error("Error cleaning up existing sparkbot webhooks in Spark - sync required at a later time", e);
+        }
+
+        context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+        context.setContextPath("/");
+        httpServer.setHandler(context);
+
+        // Add the default RAW handler
+        context.addServlet(new ServletHolder(sparkServlet),"/*");
+
+        // Temporary, just for testing
+        context.addServlet(new ServletHolder(new HelloServlet("Buongiorno Mondo")),"/it/*");
+        context.addServlet(new ServletHolder(new HelloServlet("Bonjour le Monde")),"/fr/*");
+        context.addServlet(new ServletHolder(new HelloServlet("Guten Morgen Welt")),"/de");
+
+        // Recreate registrations for all our registered handlers
+        Collection<RawEventHandlerReg> regValues = getValues(REGISTRATIONS);
+        REGISTRATIONS.clear();
+        for (RawEventHandlerReg reg : regValues) {
+            registerRawEventHandler(reg.getHandler(), reg.getFilter());
         }
     }
 
@@ -311,10 +405,18 @@ public final class WebhookServer {
             try {
                 this.httpServer.stop();
             } catch (Exception e) {
-                LOG.info("Exception: {}", e.toString());
+                LOG.info("stopHttpServer: Exception: ", e);
             }
             this.httpServer = null;
             this.httpPort = null;
         }
+    }
+
+    private static Collection<RawEventHandlerReg> getValues(Map<String, RawEventHandlerReg> reg) {
+        Collection<RawEventHandlerReg> values = new ArrayList<>();
+        for (Entry<String, RawEventHandlerReg> entry : reg.entrySet()) {
+            values.add(new RawEventHandlerReg(entry.getValue()));
+        }
+        return values;
     }
 }

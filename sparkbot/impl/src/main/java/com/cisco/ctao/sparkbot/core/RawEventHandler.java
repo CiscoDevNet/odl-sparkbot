@@ -15,7 +15,7 @@ import com.cisco.ctao.sparkbot.core.webhooksvr.WebhookEvent;
  *
  */
 @FunctionalInterface
-public interface WebhookEventHandler {
+public interface RawEventHandler {
     /** Method signature to be implemented by an app that wishes to receive.
      *  'raw' webhook events
      * @param msg: The message received from Spark

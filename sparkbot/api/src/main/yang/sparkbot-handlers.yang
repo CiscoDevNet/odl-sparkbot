@@ -34,6 +34,42 @@ module sparkbot-handlers {
        }
     }
 
+    typedef resource-type {
+        type enumeration {
+            enum "MESSAGE" {
+                value 0;
+            }
+            enum "ROOM" {
+                value 1;
+            }
+            enum "MEMBERSHIP" {
+                value 2;
+            }
+            enum "ALL" {
+                value 3;
+            }
+        }
+        default "ALL";
+    }
+
+    typedef event-type {
+        type enumeration {
+            enum "CREATED" {
+                value 0;
+            }
+            enum "UPDATED" {
+                value 1;
+            }
+            enum "DELETED" {
+                value 2;
+            }
+            enum "ALL" {
+                value 3;
+            }
+        }
+        default "ALL";
+    }
+
     rpc register-test-handler {
         description
             "Register with a WebHookServer a test handler of a given type.";
@@ -42,6 +78,33 @@ module sparkbot-handlers {
                 type handler-type;
                 description
                     "The type of the handler to register";
+            }
+            container filter {
+                leaf name {
+                    type string;
+                    description
+                        "Name";
+                }
+                leaf resource {
+                    type resource-type;
+                    description
+                        "";
+                }
+                leaf event {
+                    type event-type;
+                    description
+                        "";
+                }
+                leaf filter {
+                    type string;
+                    description
+                        "The filter";
+                }
+                leaf secret {
+                    type string;
+                    description
+                        "";
+                }
             }
         }
         output {

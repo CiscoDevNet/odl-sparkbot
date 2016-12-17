@@ -10,8 +10,8 @@ package com.cisco.ctao.sparkbot.application;
 import com.cisco.ctao.sparkbot.core.Messages;
 import com.cisco.ctao.sparkbot.core.Rooms;
 import com.cisco.ctao.sparkbot.core.SparkClient;
-import com.cisco.ctao.sparkbot.core.SparkEventHandler;
 import com.cisco.ctao.sparkbot.core.Teams;
+import com.cisco.ctao.sparkbot.core.TypedEventHandler;
 import com.cisco.ctao.sparkbot.core.webhooksvr.WebhookServer;
 import com.ciscospark.Message;
 import com.ciscospark.Room;
@@ -102,11 +102,11 @@ public class SparkbotApiExamples {
      * @author jmedved
      *
      */
-    public class SparkbotApisMsgHandler implements SparkEventHandler<Message> {
+    public class SparkbotApisMsgHandler implements TypedEventHandler<Message> {
         private final AtomicInteger eventCounter = new AtomicInteger();
 
         @Override
-        public void handleSparkEvent(String elementId, Message message, SparkEventHandler.EventType eventType) {
+        public void handleSparkEvent(String elementId, Message message, TypedEventHandler.EventType eventType) {
             LOG.info("handleSparkEvent - event #: {}, event type: {}",
                     eventCounter.incrementAndGet(), eventType);
             if (message != null) {

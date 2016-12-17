@@ -7,7 +7,7 @@
  */
 package com.cisco.ctao.sparkbot.core.webhooksvr;
 
-import com.cisco.ctao.sparkbot.core.WebhookEventHandler;
+import com.cisco.ctao.sparkbot.core.RawEventHandler;
 import com.cisco.ctao.sparkbot.core.webhooksvr.RequestHeaderData.RequestHeaderDataBuilder;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -34,14 +35,16 @@ import org.slf4j.LoggerFactory;
 class SparkServlet extends HttpServlet {
     private static final long serialVersionUID = 5221908472085737227L;
     private static final Logger LOG = LoggerFactory.getLogger(SparkServlet.class);
-    private final transient List<WebhookEventHandler> webhookHandlers = Collections.synchronizedList(new ArrayList<>());
+    private final transient List<RawEventHandler> webhookHandlers = Collections.synchronizedList(new ArrayList<>());
     private final transient Gson gson = new Gson();
+    private final String name;
 
     /** Constructor - registers a "default" logging webhook handler.
      *
      */
-    SparkServlet() {
-        registerWebhookHandler(new LoggingWebHookHandler(), null);
+    SparkServlet(String name) {
+        this.name = name;
+        registerWebhookHandler(new LoggingWebHookHandler());
     }
 
     /** Register an application webhook 'raw' handler.
@@ -49,16 +52,16 @@ class SparkServlet extends HttpServlet {
      * @param filter if specified, create a webhook in Spark with parameters
      *           as specified in the filter
      */
-    public void registerWebhookHandler(WebhookEventHandler handler, WebhookFilter filter) {
-        LOG.info("registerWebhookHandler: handler {}, filter {}", handler, filter);
+    public void registerWebhookHandler(RawEventHandler handler) {
+        LOG.info("registerWebhookHandler '{}': handler {}, filter {}", name, handler);
         webhookHandlers.add(handler);
     }
 
     /** Unregister an application webhook 'raw' handler.
      * @param handler the handler to be unregistered
      */
-    public void unregisterWebhookHandler(WebhookEventHandler handler) {
-        LOG.info("Un-registering WebhookHandler {}", handler);
+    public void unregisterWebhookHandler(RawEventHandler handler) {
+        LOG.info("unregisterWebhookHandler '{}, handler {}", name, handler);
         webhookHandlers.remove(handler);
     }
 
@@ -69,7 +72,7 @@ class SparkServlet extends HttpServlet {
             response.getWriter().println("session=" + request.getSession(true).getId());
             response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
         } catch (IOException e) {
-            LOG.error("doGet: Could not create a response, request {}", request, e);;
+            LOG.error("Servlet '{}': Could not create a response, request {}", name, request, e);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
@@ -95,7 +98,7 @@ class SparkServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        LOG.info("doPost: request {}", request);
+        LOG.info("Handler '{}' doPost: request {}", name, request);
 
         final String method = request.getMethod();
         final String uri = request.getRequestURI().trim();
@@ -111,7 +114,7 @@ class SparkServlet extends HttpServlet {
                 response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
             }
         } catch (IOException e) {
-            LOG.error("doGet: Could not create a response, request {}", request, e);
+            LOG.error("Hanlder '{}' doPost: Could not create a response, request {}", name, request, e);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
@@ -125,17 +128,17 @@ class SparkServlet extends HttpServlet {
      */
     private boolean processHttpMessage(final HttpServletRequest request, final String uri, final String payload) {
         final RequestHeaderData headers = getRequestHeaderData(request);
-        LOG.debug("payload: {}, uri {}", payload, uri);
+        LOG.debug("Handler '{}' processHttpMessage: payload {}, uri {}", name, payload, uri);
 
         try {
             final WebhookEvent msg = gson.fromJson(payload, WebhookEvent.class);
             LOG.debug("processHttpMessage handling request for {} registered handler(s)",
                     webhookHandlers.size());
-            for (WebhookEventHandler handler : webhookHandlers) {
+            for (RawEventHandler handler : webhookHandlers) {
                 handler.handleWebhookEvent(msg, headers);
             }
         } catch (JsonSyntaxException e) {
-            LOG.error("processHttpMessage: Invalid json syntax, exception {}", e);
+            LOG.error("Handler '{}' processHttpMessage: Invalid json syntax", name, e);
             return false;
         }
         return true;
@@ -180,7 +183,7 @@ class SparkServlet extends HttpServlet {
                     rdb.setHost(value);
                     break;
                 default:
-                    LOG.error("Unknown Header: {}, Value: {}", header, value);
+                    LOG.error("Hanlder '{}' Unknown Header: {}, Value: {}", name, header, value);
                     break;
             }
         }
@@ -192,11 +195,17 @@ class SparkServlet extends HttpServlet {
      * @author jmedved
      *
      */
-    private class LoggingWebHookHandler implements WebhookEventHandler {
+    private class LoggingWebHookHandler implements RawEventHandler {
+        private final AtomicInteger eventCnt = new AtomicInteger(0);
 
         @Override
         public void handleWebhookEvent(final WebhookEvent msg, final RequestHeaderData requestData) {
-            LOG.info("LoggingWebHookHandler - webook event: {}", msg.toString());
+            if (msg != null) {
+                LOG.info("Handler '{}' LoggingWebHookHandler - webook event #{}: {}",
+                        name, eventCnt.incrementAndGet(), msg.toString());
+            } else {
+                LOG.info("Handler '{}' LoggingWebHookHandler - webook event: null", name);
+            }
         }
     }
 }

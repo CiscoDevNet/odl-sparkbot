@@ -14,7 +14,7 @@ package com.cisco.ctao.sparkbot.core;
  *          Message, Room, Membership
  */
 @FunctionalInterface
-public interface SparkEventHandler<T> {
+public interface TypedEventHandler<T> {
 
     /** Defines the event type.
      * @author jmedved
