@@ -203,11 +203,12 @@ public class SparkbotProvider {
                     case WRITE:
                     case SUBTREE_MODIFIED:
                         SparkbotWebhookParms dataAfter = change.getRootNode().getDataAfter();
-                        WebhookServer.getInstance().handleHttpPortChange(dataAfter.getWebhookHttpPort());
                         WebhookServer.getInstance().handleUrlPrefixChange(dataAfter.getWebhookUrlPrefix());
+                        WebhookServer.getInstance().handleHttpPortChange(dataAfter.getWebhookHttpPort());
                         break;
                     case DELETE:
                         WebhookServer.getInstance().handleHttpPortDelete();
+                        WebhookServer.getInstance().handleUrlPrefixDelete();
                         break;
                     default:
                         log.error("SparkBotWebHookParmsChangeHandler: "

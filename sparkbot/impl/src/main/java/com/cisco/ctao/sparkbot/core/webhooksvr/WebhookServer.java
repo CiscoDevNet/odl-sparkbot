@@ -205,7 +205,7 @@ public final class WebhookServer {
         }
     }
 
-    /** Handles addition or change of HTTP Port.
+    /** Handles addition or change of Webhook Server's HTTP Port.
      * @param port the port on which to listen to requests
      */
     public void handleHttpPortChange(final Long port) {
@@ -214,6 +214,7 @@ public final class WebhookServer {
             Integer tmpPort = port.intValue();
             if ((httpPort != null && (!httpPort.equals(tmpPort))) || (httpPort == null)) {
                 httpPort = tmpPort;
+                stopHttpServer();
                 startHttpServer(tmpPort);
             }
         }
@@ -221,7 +222,7 @@ public final class WebhookServer {
 
     /** Handles addition or change of the schema/host/port prefix used in
      *  targetURLs for the webhooks created by default when a Spark Event
-     *  handler was registered.
+     *  handler is being registered.
      * @param urlPfxString the prefix string for the target URLs
      */
     public void handleUrlPrefixChange(String urlPfxString) {
@@ -229,7 +230,7 @@ public final class WebhookServer {
         if (urlPfxString != null) {
             try {
                 URI tmpPrefix = new URI(urlPfxString);
-                if (urlPrefix != null) {
+                if (urlPrefix != null && (!urlPrefix.equals(tmpPrefix))) {
                     updateWebhookTargetUrls(urlPrefix, tmpPrefix);
                 }
                 urlPrefix = tmpPrefix;
@@ -281,7 +282,6 @@ public final class WebhookServer {
     private void updateWebhookTargetUrls(URI oldTargetPrefix, URI newTargetPrefix) {
         LOG.info("updateWebhookTargetUrls: oldTargetPrefix {}, newTargetPrefix {}",
                 oldTargetPrefix, newTargetPrefix);
-
         try {
             List<Webhook> webhooks = Webhooks.listWebhooks(null);
             for (Webhook wh : webhooks) {
@@ -290,23 +290,25 @@ public final class WebhookServer {
                 if (targetUrl.getScheme().equals(oldTargetPrefix.getScheme())
                         && targetUrl.getHost().equals(oldTargetPrefix.getHost())
                         && targetUrl.getPort() == oldTargetPrefix.getPort()) {
-                    updateWebHookTargetUrl(wh, targetUrl, newTargetPrefix);
+                    updateWebhookTargetUrl(wh, targetUrl, newTargetPrefix);
                 }
             }
         } catch (SparkException e) {
-            LOG.error("Got error from Saprk - could not update webhooks with changed URL", e);
+            LOG.error("updateWebhookTargetUrls: Spark error, could not update webhooks with the new URL prefix", e);
         }
     }
 
-    private void updateWebHookTargetUrl(Webhook wh, URI targetUrl, URI newTargetPrefix) {
+    private void updateWebhookTargetUrl(Webhook wh, URI oldTargetPrefix, URI newTargetPrefix) {
+        LOG.info("updateWebhookTargetUrl: wh {}, oldTargetPrefix {}, oldTargetPrefix {}",
+                wh, oldTargetPrefix, newTargetPrefix);
         try {
             URI newUrl = new URI(newTargetPrefix.getScheme(), newTargetPrefix.getUserInfo(),
-                    newTargetPrefix.getHost(), newTargetPrefix.getPort(), targetUrl.getPath(),
+                    newTargetPrefix.getHost(), newTargetPrefix.getPort(), oldTargetPrefix.getPath(),
                     null, null);
             Webhooks.updateWebhook(wh.getId(), wh.getName(), newUrl);
         } catch (URISyntaxException e) {
-            LOG.error("handleUrlPrefixChange: Could not create new URL , targetUrl {}, newTargetPrefix {}",
-                    targetUrl.toASCIIString(), newTargetPrefix.toASCIIString(), e);
+            LOG.error("updateWebhookTargetUrl: Could not create new URL , oldTargetPrefix {}, newTargetPrefix {}",
+                    oldTargetPrefix.toASCIIString(), newTargetPrefix.toASCIIString(), e);
         }
     }
 
@@ -320,7 +322,7 @@ public final class WebhookServer {
         this.httpPort = port;
         this.httpServer = new Server(port);
 
-        syncSparkbots();
+        reconcileHandlersWithWebhooks();
 
         try {
             this.httpServer.start();
@@ -339,18 +341,12 @@ public final class WebhookServer {
         }
     }
 
-    private void syncSparkbots() {
-        LOG.info("syncSparkbots");
+    private void reconcileHandlersWithWebhooks() {
+        LOG.info("reconcileHandlersWithWebhooks");
 
         // Delete all existing webhooks from Spark
-        try {
-            for (Webhook wh : Webhooks.listWebhooks(null)) {
-                Webhooks.deleteWebhook(wh.getId());
-            }
-        } catch (SparkException e) {
-            LOG.error("Error cleaning up existing sparkbot webhooks in Spark - sync required at a later time", e);
-        }
-
+        cleanupWebhooks();
+        // Create new context for the Webhook HTTP Server
         context = new ServletContextHandler(ServletContextHandler.SESSIONS);
         context.setContextPath("/");
         httpServer.setHandler(context);
@@ -364,7 +360,7 @@ public final class WebhookServer {
         context.addServlet(new ServletHolder(new HelloServlet("Guten Morgen Welt")),"/de");
 
         // Recreate registrations for all our registered handlers
-        final Collection<RawEventHandlerReg> regValues = getValues(REGISTRATIONS);
+        final Collection<RawEventHandlerReg> regValues = cloneRegistrationValues();
         REGISTRATIONS.clear();
         for (RawEventHandlerReg reg : regValues) {
             registerRawEventHandler(reg.getHandler(), reg.getFilter());
@@ -380,18 +376,33 @@ public final class WebhookServer {
             }
             this.httpServer = null;
             this.httpPort = null;
+            cleanupWebhooks();
         }
     }
 
-    private static Collection<RawEventHandlerReg> getValues(final Map<String, RawEventHandlerReg> reg) {
-        final Collection<RawEventHandlerReg> values = new ArrayList<>();
-        for (Entry<String, RawEventHandlerReg> entry : reg.entrySet()) {
-            values.add(new RawEventHandlerReg(entry.getValue()));
+    private static void cleanupWebhooks() {
+        try {
+            for (Webhook wh : Webhooks.listWebhooks(null)) {
+                Webhooks.deleteWebhook(wh.getId());
+            }
+        } catch (SparkException e) {
+            LOG.error("Error cleaning up existing sparkbot webhooks in Spark - sync required at a later time", e);
         }
-        return values;
+    }
+
+    private static Collection<RawEventHandlerReg> cloneRegistrationValues() {
+        final Collection<RawEventHandlerReg> clonedRegs = new ArrayList<>();
+        for (Entry<String, RawEventHandlerReg> entry : REGISTRATIONS.entrySet()) {
+            clonedRegs.add(new RawEventHandlerReg(entry.getValue()));
+        }
+        return clonedRegs;
     }
 
     private static Webhook createWebhook(final WebhookFilter filter) {
+        if (WebhookServer.getWebhookUrlPrefix() == null) {
+            LOG.error("createWebhook: URL prefix not specified");
+            return null;
+        }
         URI webhookUrl;
         try {
             webhookUrl = new URI(getWebhookUrlPrefix() + "/" + filter.getName());
