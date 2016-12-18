@@ -8,21 +8,27 @@
 package com.cisco.ctao.sparkbot.core.webhooksvr;
 
 import com.cisco.ctao.sparkbot.core.RawEventHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
+
 
 public class RawEventHandlerReg {
     private final String handlerWebhookId;
     private final RawEventHandler handler;
+    private final ServletHolder servletHolder;
     private final WebhookFilter filter;
 
-    RawEventHandlerReg(String handlerSparkId, RawEventHandler handler, WebhookFilter filter) {
+    RawEventHandlerReg(String handlerSparkId, RawEventHandler handler, ServletHolder servletHolder,
+            WebhookFilter filter) {
         this.handlerWebhookId = handlerSparkId;
         this.filter = filter;
+        this.servletHolder = servletHolder;
         this.handler = handler;
     }
 
     RawEventHandlerReg(RawEventHandlerReg src) {
         this.handlerWebhookId = src.handlerWebhookId;
         this.filter = src.filter;
+        this.servletHolder = src.servletHolder;
         this.handler = src.handler;
     }
 
@@ -32,6 +38,10 @@ public class RawEventHandlerReg {
 
     public RawEventHandler getHandler() {
         return handler;
+    }
+
+    public ServletHolder getServletHolder() {
+        return servletHolder;
     }
 
     public WebhookFilter getFilter() {

@@ -44,7 +44,7 @@ class SparkServlet extends HttpServlet {
      */
     SparkServlet(String name) {
         this.name = name;
-        registerWebhookHandler(new LoggingWebHookHandler());
+        registerRawEventHandler(new LoggingWebHookHandler());
     }
 
     /** Register an application webhook 'raw' handler.
@@ -52,17 +52,18 @@ class SparkServlet extends HttpServlet {
      * @param filter if specified, create a webhook in Spark with parameters
      *           as specified in the filter
      */
-    public void registerWebhookHandler(RawEventHandler handler) {
+    public void registerRawEventHandler(RawEventHandler handler) {
         LOG.info("registerWebhookHandler '{}': handler {}, filter {}", name, handler);
         webhookHandlers.add(handler);
     }
 
     /** Unregister an application webhook 'raw' handler.
      * @param handler the handler to be unregistered
+     * @return true if a handler had been registered, false otherwise
      */
-    public void unregisterWebhookHandler(RawEventHandler handler) {
+    public boolean unregisterRawEventHandler(RawEventHandler handler) {
         LOG.info("unregisterWebhookHandler '{}, handler {}", name, handler);
-        webhookHandlers.remove(handler);
+        return webhookHandlers.remove(handler);
     }
 
     private void methodNotAllowed(HttpServletRequest request, HttpServletResponse response) {

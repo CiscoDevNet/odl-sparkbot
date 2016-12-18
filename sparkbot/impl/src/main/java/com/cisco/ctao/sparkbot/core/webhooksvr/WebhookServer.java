@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
 public final class WebhookServer {
     private static final Logger LOG = LoggerFactory.getLogger(WebhookServer.class);
     private static final String EVT_HANDLER_METHOD_NAME = "handleSparkEvent";
-    private static final Map<String, RawEventHandlerReg> REGISTRATIONS = new HashMap<>();
+    private static final Map<RawEventHandler, RawEventHandlerReg> REGISTRATIONS = new HashMap<>();
 
     private static WebhookServer instance;
 
@@ -107,17 +107,17 @@ public final class WebhookServer {
         LOG.info("registerRawEventHandler: handler {}, filter {}", handler, filter);
         if (filter != null) {
             // Create a new servlet for the handler
-            if (REGISTRATIONS.get(filter.getName()) == null) {
+            if (REGISTRATIONS.get(handler) == null) {
                 Webhook webhook = createWebhook(filter);
 
                 final SparkServlet servlet = new SparkServlet(filter.getName());
-                servlet.registerWebhookHandler(handler);
+                servlet.registerRawEventHandler(handler);
                 final ServletHolder sh = new ServletHolder(servlet);
                 getInstance().context.addServlet(sh, "/" + filter.getName());
                 try {
                     sh.start();
                     final String webhookId = (webhook != null) ? webhook.getId() : null;
-                    REGISTRATIONS.put(filter.getName(), new RawEventHandlerReg(webhookId, handler, filter));
+                    REGISTRATIONS.put(handler, new RawEventHandlerReg(webhookId, handler, sh, filter));
                 } catch (Exception e) {
                     LOG.error("registerRawEventHandler: failed to start servlet {}, ", filter.getName(), e);
                 }
@@ -126,7 +126,7 @@ public final class WebhookServer {
             }
         } else {
             // Register the handler with the default servlet
-            getInstance().sparkServlet.registerWebhookHandler(handler);
+            getInstance().sparkServlet.registerRawEventHandler(handler);
         }
     }
 
@@ -134,7 +134,27 @@ public final class WebhookServer {
      * @param handler: the handler to be registered
      */
     public static void unregisterRawEventHandler(final RawEventHandler handler) {
-        getInstance().sparkServlet.unregisterWebhookHandler(handler);
+        LOG.info("unregisterRawEventHandler: handler {}", handler);
+
+        if (!getInstance().sparkServlet.unregisterRawEventHandler(handler)) {
+            RawEventHandlerReg reg = REGISTRATIONS.get(handler);
+            if (reg != null) {
+                RawEventHandlerReg reg1 = new RawEventHandlerReg(reg);
+                REGISTRATIONS.remove(handler);
+                try {
+                    reg1.getServletHolder().stop();
+                    reg1.getServletHolder().getServlet().destroy();
+                    Webhooks.deleteWebhook(reg1.getHandlerWebhookId());
+                } catch (Exception e) {
+                    LOG.error("Could not stop and/or destroy servlet for handler {}", handler, e);
+                    LOG.error("Restarting the Webhook HTTP Server.");
+                    getInstance().stopHttpServer();
+                    getInstance().startHttpServer(getInstance().httpPort);
+                }
+            } else {
+                LOG.info("unregisterRawEventHandler: handler '{}' not found", handler);
+            }
+        }
     }
 
     /** Register a handler to process Spark webhook events.
@@ -374,6 +394,7 @@ public final class WebhookServer {
             } catch (Exception e) {
                 LOG.info("stopHttpServer: Exception: ", e);
             }
+            httpServer.destroy();
             this.httpServer = null;
             this.httpPort = null;
             cleanupWebhooks();
@@ -392,7 +413,7 @@ public final class WebhookServer {
 
     private static Collection<RawEventHandlerReg> cloneRegistrationValues() {
         final Collection<RawEventHandlerReg> clonedRegs = new ArrayList<>();
-        for (Entry<String, RawEventHandlerReg> entry : REGISTRATIONS.entrySet()) {
+        for (Entry<RawEventHandler, RawEventHandlerReg> entry : REGISTRATIONS.entrySet()) {
             clonedRegs.add(new RawEventHandlerReg(entry.getValue()));
         }
         return clonedRegs;
