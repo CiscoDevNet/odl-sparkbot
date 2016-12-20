@@ -122,9 +122,9 @@ Sparkbot 'Raw' event handlers must implement the 'Raw' Event Handling API define
 ```
     void handleWebhookEvent(WebhookEvent msg, RequestHeaderData requestData);
 ```
-Sparkbot passes to the handler the message received from Spark and data from the HTTP Request header.
+Sparkbot passes to the handler the event received from Spark and the data from the HTTP Request header.
 
-The 'Raw' events are processed by the Sparkbot event handler framework into 'Typed' events - i.e. the framework determines the type of the event and the resource for which the event occured, then retrieves the event's resource from Spark and passes it onto the registered event handler. 
+Typed events peform some of the tasks of a raw event handler and pre-process an incoming event before handing it over to the user. A user registers to receive events for a resource of a certain type - Message, room or Membership. Therefore, the user's handler can be 'typed', i.e. designed to only deal with a resource of a certain type. When registering for a typed event, the user can also specify the event type (created, updated, deleted, all), a filter and a secret. The user must specify a name for the handler, which will also be used to create a unique path in Sparkbot's HTTP event server where the registered handler will be invoked. Effectively,  'Raw' events are processed by the Sparkbot event handler framework into 'Typed' events - i.e. the framework determines the type of the event and the resource for which the event occured, then retrieves the event's resource from Spark and passes it onto the registered event handler. 
 
 Sparkbot 'Typed' event handlers must implement the Spark Event Handling API defined in [SparkEventHandler.java](https://github.com/CiscoDevNet/odl-sparkbot/blob/master/sparkbot/impl/src/main/java/com/cisco/ctao/sparkbot/core/SparkEventHandler.java). A handler of Sparkbot 'Typed' events must implement the following method
 ```
@@ -133,11 +133,12 @@ Sparkbot 'Typed' event handlers must implement the Spark Event Handling API defi
 for the desired element type `<T>`. Messages, Rooms, and Memberships are the supported element types in Spark webhooks and they are all supported by the Sparkbot framework. For more details see https://developer.ciscospark.com/webhooks-explained.html.
 
 #### Registering/Unregistering Event Handlers
-The handler registration API for both 'Raw' and 'Typed' event handlers can be found in [WebhookServer.java](https://github.com/CiscoDevNet/odl-sparkbot/blob/master/sparkbot/impl/src/main/java/com/cisco/ctao/sparkbot/core/webhooksvr/WebhookServer.java). The registration methods are:
+The handler registration API for both 'Raw' and 'Typed' event handlers can be found in [WebhookServer.java](https://github.com/CiscoDevNet/odl-sparkbot/blob/master/sparkbot/impl/src/main/java/com/cisco/ctao/sparkbot/core/webhooksvr/WebhookServer.java). The registration method for the 'Raw' event handler is as follows:
 ```
-    static void registerWebhookHandler(final WebhookEventHandler handler);
+    public static void registerRawEventHandler(final RawEventHandler handler, final WebhookFilter filter)
 ```
-and
+If the `filter` parameter is specified, Sparkbot will create a servlet in the HTTP Event Server just for the handler. The path for the servlet is derived from the `name` parameter specified in the filter. Sparkbot will also create a webhook in Spark for the handler with parameters specified in the filter. The `targetURL` value in the webhook is derived from Sparkbot's `urlPrefix` web server configuration parameter and the `name` paramter in the filter. The filter also contains values for webhook's resource type, event type, filter string and secret parameters.
+
 ```
     public static <T> void registerSparkEventHandler(final SparkEventHandler<T> handler);
 ```
