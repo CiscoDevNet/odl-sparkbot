@@ -42,17 +42,12 @@ import org.slf4j.LoggerFactory;
 public final class WebhookServer {
     private static final Logger LOG = LoggerFactory.getLogger(WebhookServer.class);
     private static final String EVT_HANDLER_METHOD_NAME = "handleSparkEvent";
-    private static final Map<RawEventHandler, RawEventHandlerReg> REGISTRATIONS = new HashMap<>();
+    private static final Map<RawEventHandler, RawEventHandlerReg> RAW_HANDLER_REGISTRATIONS = new HashMap<>();
+    private static final Map<TypedEventHandler<?>, RawEventHandler> TYPED_HANDLER_REGISTRATIONS = new HashMap<>();
 
     private static WebhookServer instance;
 
     private final SparkServlet sparkServlet = new SparkServlet("Default");
-    private final SparkEventProcessor<Message> msgEventProcessor =
-            new SparkEventProcessor<>(Messages.api(), "messages");
-    private final SparkEventProcessor<Room> roomEventProcessor =
-            new SparkEventProcessor<>(Rooms.api(), "rooms");
-    private final SparkEventProcessor<Membership> membershipEventProcessor =
-            new SparkEventProcessor<>(Memberships.api(), "memberships");
 
     private Server httpServer;
     private Integer httpPort;
@@ -107,7 +102,7 @@ public final class WebhookServer {
         LOG.info("registerRawEventHandler: handler {}, filter {}", handler, filter);
         if (filter != null) {
             // Create a new servlet for the handler
-            if (REGISTRATIONS.get(handler) == null) {
+            if (RAW_HANDLER_REGISTRATIONS.get(handler) == null) {
                 Webhook webhook = createWebhook(filter);
 
                 final SparkServlet servlet = new SparkServlet(filter.getName());
@@ -117,7 +112,7 @@ public final class WebhookServer {
                 try {
                     sh.start();
                     final String webhookId = (webhook != null) ? webhook.getId() : null;
-                    REGISTRATIONS.put(handler, new RawEventHandlerReg(webhookId, handler, sh, filter));
+                    RAW_HANDLER_REGISTRATIONS.put(handler, new RawEventHandlerReg(webhookId, handler, sh, filter));
                 } catch (Exception e) {
                     LOG.error("registerRawEventHandler: failed to start servlet {}, ", filter.getName(), e);
                 }
@@ -137,10 +132,10 @@ public final class WebhookServer {
         LOG.info("unregisterRawEventHandler: handler {}", handler);
 
         if (!getInstance().sparkServlet.unregisterRawEventHandler(handler)) {
-            RawEventHandlerReg reg = REGISTRATIONS.get(handler);
+            RawEventHandlerReg reg = RAW_HANDLER_REGISTRATIONS.get(handler);
             if (reg != null) {
                 RawEventHandlerReg reg1 = new RawEventHandlerReg(reg);
-                REGISTRATIONS.remove(handler);
+                RAW_HANDLER_REGISTRATIONS.remove(handler);
                 try {
                     reg1.getServletHolder().stop();
                     reg1.getServletHolder().getServlet().destroy();
@@ -162,35 +157,55 @@ public final class WebhookServer {
      *          can be parameterized to a Message, Room, or Membership.
      */
     public static <T> void registerSparkEventHandler(final TypedEventHandler<T> handler) {
-        registerSparkEventHandler(handler, null);
+        registerTypedEventHandler(handler, WebhookFilter.Events.ALL, null, null,
+                "default-" + findEventHandlerClass(handler).getName());
     }
 
     /** Register a handler to process Spark webhook events.
      * @param handler reference to the handler to be registered. A handler
      *          can be parameterized to a Message, Room, or Membership.
-     * @param filter if specified, create a webhook in Spark with parameters
-     *           as specified in the filter
+     * @param event event type for which this handler applies ('created',
+     *          'updated', or 'deleted')
+     * @param filter filter string to be passed to the spark webhook created
+     *          for this handler
+     * @param secret secret string to be passed to the spark webhook created
+     *          for this handler
+     * @param name name for this handler; will also be used as the path for
+     *          the servlet created for this handler
      */
     @SuppressWarnings("unchecked")
-    public static <T> void registerSparkEventHandler(final TypedEventHandler<T> handler,
-            final WebhookFilter filter) {
+    public static <T> void registerTypedEventHandler(final TypedEventHandler<T> handler,
+            final WebhookFilter.Events event, final String filter, final String secret, final String name ) {
+        LOG.info("registerTypedEventHandler: handler {}", handler);
+
         Class<?> clazz = findEventHandlerClass(handler);
         if (clazz != null) {
             if (Message.class.isAssignableFrom(clazz)) {
-                SparkEventProcessor<Message> evtProc = getInstance().msgEventProcessor;
-                if (evtProc.registerHandler((TypedEventHandler<Message>) handler) == 0) {
-                    registerRawEventHandler(evtProc);
-                }
+                final WebhookFilter wf = new WebhookFilter(event, WebhookFilter.Resources.MESSAGES,
+                        filter, secret, name);
+                final SparkEventProcessor<Message> evtProc = new SparkEventProcessor<>(Messages.api(),
+                        "messages");
+                evtProc.registerHandler((TypedEventHandler<Message>) handler);
+                registerRawEventHandler(evtProc, wf);
+                TYPED_HANDLER_REGISTRATIONS.put(handler, evtProc);
+
             } else if (Room.class.isAssignableFrom(clazz)) {
-                SparkEventProcessor<Room> evtProc = getInstance().roomEventProcessor;
-                if (evtProc.registerHandler((TypedEventHandler<Room>) handler) == 0) {
-                    registerRawEventHandler(evtProc);
-                }
+                final WebhookFilter wf = new WebhookFilter(event, WebhookFilter.Resources.ROOMS,
+                        filter, secret, name);
+                SparkEventProcessor<Room> evtProc = new SparkEventProcessor<>(Rooms.api(), "rooms");
+                evtProc.registerHandler((TypedEventHandler<Room>) handler);
+                registerRawEventHandler(evtProc, wf);
+                TYPED_HANDLER_REGISTRATIONS.put(handler, evtProc);
+
             } else if (Membership.class.isAssignableFrom(clazz)) {
-                SparkEventProcessor<Membership> evtProc = getInstance().membershipEventProcessor;
-                if (evtProc.registerHandler((TypedEventHandler<Membership>) handler) == 0) {
-                    registerRawEventHandler(evtProc);
-                }
+                final WebhookFilter wf = new WebhookFilter(event, WebhookFilter.Resources.MEMBERSHIPS,
+                        filter, secret, name);
+                SparkEventProcessor<Membership> evtProc = new SparkEventProcessor<>(Memberships.api(),
+                        "memberships");
+                evtProc.registerHandler((TypedEventHandler<Membership>) handler);
+                registerRawEventHandler(evtProc, wf);
+                TYPED_HANDLER_REGISTRATIONS.put(handler, evtProc);
+
             } else {
                 LOG.error("Invalid event handler object, sparkEventHandler method {}", clazz.getName());
             }
@@ -202,26 +217,30 @@ public final class WebhookServer {
      */
     @SuppressWarnings("unchecked")
     public static <T> void unregisterSparkEventHandler(final TypedEventHandler<T> handler) {
+        LOG.info("unregisterSparkEventHandler: handler {}", handler);
+
         Class<?> clazz = findEventHandlerClass(handler);
         if (clazz != null) {
-            if (Message.class.isAssignableFrom(clazz)) {
-                SparkEventProcessor<Message> evtProc = getInstance().msgEventProcessor;
-                if (evtProc.unregisterHandler((TypedEventHandler<Message>) handler) == 0) {
-                    unregisterRawEventHandler(evtProc);
+            RawEventHandler evtProc = TYPED_HANDLER_REGISTRATIONS.get(handler);
+            if (evtProc != null) {
+                if (Message.class.isAssignableFrom(clazz)) {
+                    ((SparkEventProcessor<Message>)evtProc).unregisterHandler((TypedEventHandler<Message>) handler);
+                } else if (Room.class.isAssignableFrom(clazz)) {
+                    ((SparkEventProcessor<Room>)evtProc).unregisterHandler((TypedEventHandler<Room>)handler);
+                } else if (Membership.class.isAssignableFrom(clazz)) {
+                    ((SparkEventProcessor<Membership>)evtProc)
+                    .unregisterHandler((TypedEventHandler<Membership>) handler);
+                } else {
+                    LOG.error("unregisterSparkEventHandler: Invalid event handler object, sparkEventHandler method {}",
+                            clazz.getName());
                 }
-            } else if (Room.class.isAssignableFrom(clazz)) {
-                SparkEventProcessor<Room> evtProc = getInstance().roomEventProcessor;
-                if (evtProc.unregisterHandler((TypedEventHandler<Room>) handler) == 0) {
-                    unregisterRawEventHandler(evtProc);
-                }
-            } else if (Membership.class.isAssignableFrom(clazz)) {
-                SparkEventProcessor<Membership> evtProc = getInstance().membershipEventProcessor;
-                if (evtProc.unregisterHandler((TypedEventHandler<Membership>) handler) == 0) {
-                    unregisterRawEventHandler(evtProc);
-                }
+                unregisterRawEventHandler(evtProc);
+                TYPED_HANDLER_REGISTRATIONS.remove(handler);
             } else {
-                LOG.error("Invalid event handler object, sparkEventHandler method {}", clazz.getName());
+                LOG.error("unregisterSparkEventHandler: Unkown handler {}", handler);
             }
+        } else {
+            LOG.error("unregisterSparkEventHandler: Unkown resource class for handler {}", handler);
         }
     }
 
@@ -381,7 +400,7 @@ public final class WebhookServer {
 
         // Recreate registrations for all our registered handlers
         final Collection<RawEventHandlerReg> regValues = cloneRegistrationValues();
-        REGISTRATIONS.clear();
+        RAW_HANDLER_REGISTRATIONS.clear();
         for (RawEventHandlerReg reg : regValues) {
             registerRawEventHandler(reg.getHandler(), reg.getFilter());
         }
@@ -413,7 +432,7 @@ public final class WebhookServer {
 
     private static Collection<RawEventHandlerReg> cloneRegistrationValues() {
         final Collection<RawEventHandlerReg> clonedRegs = new ArrayList<>();
-        for (Entry<RawEventHandler, RawEventHandlerReg> entry : REGISTRATIONS.entrySet()) {
+        for (Entry<RawEventHandler, RawEventHandlerReg> entry : RAW_HANDLER_REGISTRATIONS.entrySet()) {
             clonedRegs.add(new RawEventHandlerReg(entry.getValue()));
         }
         return clonedRegs;

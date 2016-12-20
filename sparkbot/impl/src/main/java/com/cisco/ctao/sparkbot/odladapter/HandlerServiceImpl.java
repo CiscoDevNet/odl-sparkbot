@@ -9,8 +9,8 @@ package com.cisco.ctao.sparkbot.odladapter;
 
 import com.cisco.ctao.sparkbot.core.testhandlers.WebhookMembershipTestHandler;
 import com.cisco.ctao.sparkbot.core.testhandlers.WebhookMessageTestHandler;
-import com.cisco.ctao.sparkbot.core.testhandlers.WebhookRoomTestHandler;
 import com.cisco.ctao.sparkbot.core.testhandlers.WebhookRawTestHandler;
+import com.cisco.ctao.sparkbot.core.testhandlers.WebhookRoomTestHandler;
 import com.cisco.ctao.sparkbot.core.webhooksvr.WebhookFilter;
 import com.cisco.ctao.sparkbot.core.webhooksvr.WebhookFilter.Events;
 import com.cisco.ctao.sparkbot.core.webhooksvr.WebhookFilter.Resources;
@@ -93,55 +93,82 @@ public class HandlerServiceImpl implements SparkbotHandlersService {
 
     @Override
     public Future<RpcResult<RegisterTestHandlerOutput>> registerTestHandler(RegisterTestHandlerInput input) {
-        LOG.info("Registering test handler, input {}", input);
+        LOG.info("registerTestHandler, input {}", input);
         final RegisterTestHandlerOutputBuilder ob =
                 new RegisterTestHandlerOutputBuilder().setReturnStatus(ReturnCode.OK);
 
         if (input != null) {
-            WebhookFilter filter = createFilter(input.getFilter());
-            LOG.info("registerTestHandler - CREATED FILTER: {}", filter);
-            switch (input.getHandlerType()) {
-                case RAW:
-                    if (testHandler == null) {
-                        testHandler = new WebhookRawTestHandler();
-                        WebhookServer.registerRawEventHandler(testHandler, filter);
-                    } else {
-                        LOG.error(HANDLER_CREATED_ERR);
-                    }
-                    break;
-                case MESSAGES:
-                    if (msgTestHandler == null) {
-                        msgTestHandler = new WebhookMessageTestHandler();
-                        WebhookServer.registerSparkEventHandler(msgTestHandler, filter);
-                    } else {
-                        LOG.error(HANDLER_CREATED_ERR);
-                    }
-                    break;
-                case ROOMS:
-                    if (roomTestHandler == null) {
-                        roomTestHandler = new WebhookRoomTestHandler();
-                        WebhookServer.registerSparkEventHandler(roomTestHandler, filter);
-                    } else {
-                        LOG.error(HANDLER_CREATED_ERR);
-                    }
-                    break;
-                case MEMBERSHIPS:
-                    if (membershipTestHandler == null) {
-                        membershipTestHandler = new WebhookMembershipTestHandler();
-                        WebhookServer.registerSparkEventHandler(membershipTestHandler, filter);
-                    } else {
-                        LOG.error(HANDLER_CREATED_ERR);
-                    }
-                    break;
-                default:
-                    LOG.error("unsupported handler type {}", input.getHandlerType());
-                    ob.setReturnStatus(ReturnCode.INVALIDPARAMETER);
-                    break;
+            final Filter odlFilter = input.getFilter();
+            if (odlFilter != null) {
+                switch (input.getHandlerType()) {
+                    case RAW:
+                        registerRawTestHandler(input.getFilter());
+                        break;
+                    case MESSAGES:
+                        registerMessageTestHandler(input.getFilter());
+                        break;
+                    case ROOMS:
+                        registerRoomTestHandler(input.getFilter());
+                        break;
+                    case MEMBERSHIPS:
+                        registerMembershipTestHandler(input.getFilter());
+                        break;
+                    default:
+                        LOG.error("unsupported handler type {}", input.getHandlerType());
+                        ob.setReturnStatus(ReturnCode.INVALIDPARAMETER);
+                        break;
+                }
             }
         } else {
             ob.setReturnStatus(ReturnCode.INVALIDPARAMETER);
         }
         return RpcResultBuilder.success(ob.build()).buildFuture();
+    }
+
+    private void registerMembershipTestHandler(Filter odlFilter) {
+        LOG.info("registerMembershipTestHandler, odlFilter {}", odlFilter);
+        if (membershipTestHandler == null) {
+            membershipTestHandler = new WebhookMembershipTestHandler();
+            WebhookServer.registerTypedEventHandler(membershipTestHandler,
+                    getEventType(odlFilter.getEvent()),
+                    odlFilter.getFilter(), odlFilter.getSecret(), odlFilter.getName());
+        } else {
+            LOG.error(HANDLER_CREATED_ERR);
+        }
+    }
+
+    private void registerRoomTestHandler(Filter odlFilter) {
+        LOG.info("registerRoomTestHandler, odlFilter {}", odlFilter);
+        if (roomTestHandler == null) {
+            roomTestHandler = new WebhookRoomTestHandler();
+            WebhookServer.registerTypedEventHandler(roomTestHandler,
+                    getEventType(odlFilter.getEvent()),
+                    odlFilter.getFilter(), odlFilter.getSecret(), odlFilter.getName());
+        } else {
+            LOG.error(HANDLER_CREATED_ERR);
+        }
+    }
+
+    private void registerMessageTestHandler(Filter odlFilter) {
+        LOG.info("registerMessageTestHandler, odlFilter {}", odlFilter);
+        if (msgTestHandler == null) {
+            msgTestHandler = new WebhookMessageTestHandler();
+            WebhookServer.registerTypedEventHandler(msgTestHandler,
+                    getEventType(odlFilter.getEvent()),
+                    odlFilter.getFilter(), odlFilter.getSecret(), odlFilter.getName());
+        } else {
+            LOG.error(HANDLER_CREATED_ERR);
+        }
+    }
+
+    private void registerRawTestHandler(Filter odlFilter) {
+        LOG.info("registerRawTestHandler, odlFilter {}", odlFilter);
+        if (testHandler == null) {
+            testHandler = new WebhookRawTestHandler();
+            WebhookServer.registerRawEventHandler(testHandler, createFilter(odlFilter));
+        } else {
+            LOG.error(HANDLER_CREATED_ERR);
+        }
     }
 
     private WebhookFilter createFilter(Filter filter) {
