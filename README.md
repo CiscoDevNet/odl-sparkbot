@@ -135,18 +135,23 @@ for the desired element type `<T>`. Messages, Rooms, and Memberships are the sup
 #### Registering/Unregistering Event Handlers
 The handler registration API for both 'Raw' and 'Typed' event handlers can be found in [WebhookServer.java](https://github.com/CiscoDevNet/odl-sparkbot/blob/master/sparkbot/impl/src/main/java/com/cisco/ctao/sparkbot/core/webhooksvr/WebhookServer.java). The registration method for the 'Raw' event handler is as follows:
 ```
-    public static void registerRawEventHandler(final RawEventHandler handler, final WebhookFilter filter)
+    static void registerRawEventHandler(final RawEventHandler handler, final WebhookFilter filter)
 ```
 If the `filter` parameter is specified, Sparkbot will create a servlet in the HTTP Event Server just for the handler. The path for the servlet is derived from the `name` parameter specified in the filter. Sparkbot will also create a webhook in Spark for the handler with parameters specified in the filter. The `targetURL` value in the webhook is derived from Sparkbot's `urlPrefix` web server configuration parameter and the `name` paramter in the filter. The filter also contains values for webhook's resource type, event type, filter string and secret parameters.
 
+The registration method for the 'Typed' event handler is as follows: 
 ```
-    public static <T> void registerSparkEventHandler(final SparkEventHandler<T> handler);
+    static <T> void registerTypedEventHandler(final TypedEventHandler<T> handler,
+            final WebhookFilter.Events event, final String filter, final String secret, final String name)
 ```
-Similarly, the unregistration methods are:
+There is a single handler registration API for all typed handlers (Message, Room, Membership). Each registered typed event handler gets its own servlet and a webhook with resource, event, filter and secret parameters as specified at handler registration through the registration API.
+
+A registered handler can be 'unregistered'. Unregistration will remove the handler's servlet fro mthe HTTP Event Server and the webhook from Spark. The unregistration methods for the 'Raw' and 'Typed' handlers are:
+
 ```
-    static void unregisterWebhookHandler(final WebhookEventHandler handler);
+    static void unregisterRawEventHandler(final RawEventHandler handler)
 ```
 and
 ```
-    static <T> void unregisterSparkEventHandler(final SparkEventHandler<T> handler);
+    static <T> void unregisterTypedEventHandler(final TypedEventHandler<T> handler)
 ```
